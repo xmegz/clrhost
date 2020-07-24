@@ -1,17 +1,17 @@
 {
   "format": 1,
   "restore": {
-    "C:\\Project\\PadarCom\\Source\\StartClr\\StartClr\\Hello\\Hello.csproj": {}
+    "c:\\Project\\PadarCom\\Source\\ClrHost\\Hello\\Hello.csproj": {}
   },
   "projects": {
-    "C:\\Project\\PadarCom\\Source\\StartClr\\StartClr\\Hello\\Hello.csproj": {
+    "c:\\Project\\PadarCom\\Source\\ClrHost\\Hello\\Hello.csproj": {
       "version": "1.0.0",
       "restore": {
-        "projectUniqueName": "C:\\Project\\PadarCom\\Source\\StartClr\\StartClr\\Hello\\Hello.csproj",
+        "projectUniqueName": "c:\\Project\\PadarCom\\Source\\ClrHost\\Hello\\Hello.csproj",
         "projectName": "Hello",
-        "projectPath": "C:\\Project\\PadarCom\\Source\\StartClr\\StartClr\\Hello\\Hello.csproj",
+        "projectPath": "c:\\Project\\PadarCom\\Source\\ClrHost\\Hello\\Hello.csproj",
         "packagesPath": "C:\\Users\\hp\\.nuget\\packages\\",
-        "outputPath": "C:\\Project\\PadarCom\\Source\\StartClr\\StartClr\\Hello\\obj\\",
+        "outputPath": "c:\\Project\\PadarCom\\Source\\ClrHost\\Hello\\obj\\",
         "projectStyle": "PackageReference",
         "fallbackFolders": [
           "C:\\Program Files\\dotnet\\sdk\\NuGetFallbackFolder"
