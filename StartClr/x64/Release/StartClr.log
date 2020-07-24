@@ -1,0 +1,6 @@
+﻿  StartClr.cpp
+  Generating code
+  Previous IPDB not found, fall back to full compilation.
+  All 80 functions were compiled because no usable IPDB/IOBJ from previous compilation was found.
+  Finished generating code
+  StartClr.vcxproj -> C:\Project\PadarCom\Source\StartClr\StartClr\x64\Release\StartClr.exe

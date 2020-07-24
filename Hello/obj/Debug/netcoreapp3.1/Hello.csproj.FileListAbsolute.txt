@@ -1,0 +1,12 @@
+C:\Project\PadarCom\Source\StartClr\StartClr\Hello\bin\Debug\netcoreapp3.1\Hello.exe
+C:\Project\PadarCom\Source\StartClr\StartClr\Hello\bin\Debug\netcoreapp3.1\Hello.deps.json
+C:\Project\PadarCom\Source\StartClr\StartClr\Hello\bin\Debug\netcoreapp3.1\Hello.runtimeconfig.json
+C:\Project\PadarCom\Source\StartClr\StartClr\Hello\bin\Debug\netcoreapp3.1\Hello.runtimeconfig.dev.json
+C:\Project\PadarCom\Source\StartClr\StartClr\Hello\bin\Debug\netcoreapp3.1\Hello.dll
+C:\Project\PadarCom\Source\StartClr\StartClr\Hello\bin\Debug\netcoreapp3.1\Hello.pdb
+C:\Project\PadarCom\Source\StartClr\StartClr\Hello\obj\Debug\netcoreapp3.1\Hello.AssemblyInfoInputs.cache
+C:\Project\PadarCom\Source\StartClr\StartClr\Hello\obj\Debug\netcoreapp3.1\Hello.AssemblyInfo.cs
+C:\Project\PadarCom\Source\StartClr\StartClr\Hello\obj\Debug\netcoreapp3.1\Hello.csproj.CoreCompileInputs.cache
+C:\Project\PadarCom\Source\StartClr\StartClr\Hello\obj\Debug\netcoreapp3.1\Hello.dll
+C:\Project\PadarCom\Source\StartClr\StartClr\Hello\obj\Debug\netcoreapp3.1\Hello.pdb
+C:\Project\PadarCom\Source\StartClr\StartClr\Hello\obj\Debug\netcoreapp3.1\Hello.genruntimeconfig.cache
