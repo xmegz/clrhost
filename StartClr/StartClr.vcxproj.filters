@@ -15,25 +15,16 @@
     </Filter>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="StartClr.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-  </ItemGroup>
-  <ItemGroup>
-    <None Include="..\Hello\bin\Debug\netcoreapp3.1\Hello.dll" />
-  </ItemGroup>
-  <ItemGroup>
-    <ClInclude Include="mscoree.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="hostfxr.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="coreclr_delegates.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="coreclrhost.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <CopyFileToFolders Include="..\Hello\bin\Debug\netcoreapp3.1\Hello.dll" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="coreclrhost.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
 </Project>

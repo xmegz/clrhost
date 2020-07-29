@@ -2,13 +2,11 @@
 
 namespace Hello
 {
-    class Program
+    public class Program
     {
-        static void Main()
+        public static void Main()
         {
-            Console.WriteLine("Hello World!");
-
-            
+            Console.WriteLine("Hello World!");            
         }
 
         

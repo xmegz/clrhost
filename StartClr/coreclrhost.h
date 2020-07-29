@@ -1,12 +1,30 @@
+
+// Include
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <string>
+#include <windows.h>
+#include <vector>
+
+
+// Environment
+#define FS_SEPARATOR "\\"
+#define PATH_DELIMITER ";"
+#define CORECLR_PATH "c:\\Program Files\\dotnet\\shared\\Microsoft.NETCore.App\\3.1.6\\"
+#define CORECLR_FILE_NAME "coreclr.dll"
+
+
+// APIs for hosting CoreCLR
+// https://github.com/dotnet/coreclr/blob/release/3.1/src/vm/corhost.cpp
+// https://github.com/dotnet/coreclr/blob/release/3.1/src/binder/applicationcontext.cpp
+// https://github.com/dotnet/coreclr/blob/release/3.1/src/dlls/mscoree/unixinterface.cpp
+
 // Retrieved from https://github.com/dotnet/coreclr/blob/master/src/coreclr/hosts/inc/coreclrhost.h
 
 // Licensed to the .NET Foundation under one or more agreements.
 // The .NET Foundation licenses this file to you under the MIT license.
 // See the LICENSE file in the project root for more information.
-
-//
-// APIs for hosting CoreCLR
-//
 
 #ifndef __CORECLR_HOST_H__
 #define __CORECLR_HOST_H__
@@ -23,7 +41,7 @@
 #define CORECLR_HOSTING_API(function, ...) \
     extern "C" int CORECLR_CALLING_CONVENTION function(__VA_ARGS__); \
     typedef int (CORECLR_CALLING_CONVENTION *function##_ptr)(__VA_ARGS__)
-    
+
 //
 // Initialize the CoreCLR. Creates and starts CoreCLR host and creates an app domain
 //
@@ -40,13 +58,13 @@
 //  HRESULT indicating status of the operation. S_OK if the assembly was successfully executed
 //
 CORECLR_HOSTING_API(coreclr_initialize,
-            const char* exePath,
-            const char* appDomainFriendlyName,
-            int propertyCount,
-            const char** propertyKeys,
-            const char** propertyValues,
-            void** hostHandle,
-            unsigned int* domainId);
+	const char* exePath,
+	const char* appDomainFriendlyName,
+	int propertyCount,
+	const char** propertyKeys,
+	const char** propertyValues,
+	void** hostHandle,
+	unsigned int* domainId);
 
 //
 // Shutdown CoreCLR. It unloads the app domain and stops the CoreCLR host.
@@ -59,8 +77,8 @@ CORECLR_HOSTING_API(coreclr_initialize,
 //  HRESULT indicating status of the operation. S_OK if the assembly was successfully executed
 //
 CORECLR_HOSTING_API(coreclr_shutdown,
-            void* hostHandle,
-            unsigned int domainId);
+	void* hostHandle,
+	unsigned int domainId);
 
 //
 // Shutdown CoreCLR. It unloads the app domain and stops the CoreCLR host.
@@ -74,9 +92,9 @@ CORECLR_HOSTING_API(coreclr_shutdown,
 //  HRESULT indicating status of the operation. S_OK if the assembly was successfully executed
 //
 CORECLR_HOSTING_API(coreclr_shutdown_2,
-            void* hostHandle,
-            unsigned int domainId,
-            int* latchedExitCode);
+	void* hostHandle,
+	unsigned int domainId,
+	int* latchedExitCode);
 
 //
 // Create a native callable function pointer for a managed method.
@@ -93,12 +111,12 @@ CORECLR_HOSTING_API(coreclr_shutdown_2,
 //  HRESULT indicating status of the operation. S_OK if the assembly was successfully executed
 //
 CORECLR_HOSTING_API(coreclr_create_delegate,
-            void* hostHandle,
-            unsigned int domainId,
-            const char* entryPointAssemblyName,
-            const char* entryPointTypeName,
-            const char* entryPointMethodName,
-            void** delegate);
+	void* hostHandle,
+	unsigned int domainId,
+	const char* entryPointAssemblyName,
+	const char* entryPointTypeName,
+	const char* entryPointMethodName,
+	void** delegate);
 
 //
 // Execute a managed assembly with given arguments
@@ -115,13 +133,13 @@ CORECLR_HOSTING_API(coreclr_create_delegate,
 //  HRESULT indicating status of the operation. S_OK if the assembly was successfully executed
 //
 CORECLR_HOSTING_API(coreclr_execute_assembly,
-            void* hostHandle,
-            unsigned int domainId,
-            int argc,
-            const char** argv,
-            const char* managedAssemblyPath,
-            unsigned int* exitCode);
+	void* hostHandle,
+	unsigned int domainId,
+	int argc,
+	const char** argv,
+	const char* managedAssemblyPath,
+	unsigned int* exitCode);
 
 #undef CORECLR_HOSTING_API
-                      
+
 #endif // __CORECLR_HOST_H__
