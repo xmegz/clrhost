@@ -1,4 +1,3 @@
-
 // Include
 #include <stdio.h>
 #include <stdlib.h>
@@ -11,7 +10,13 @@
 // Environment
 #define FS_SEPARATOR "\\"
 #define PATH_DELIMITER ";"
+
+#if defined(_WIN32) && defined(_M_IX86)
+#define CORECLR_PATH "c:\\Program Files (x86)\\dotnet\\shared\\Microsoft.NETCore.App\\3.1.6\\"
+#else
 #define CORECLR_PATH "c:\\Program Files\\dotnet\\shared\\Microsoft.NETCore.App\\3.1.6\\"
+#endif
+
 #define CORECLR_FILE_NAME "coreclr.dll"
 
 

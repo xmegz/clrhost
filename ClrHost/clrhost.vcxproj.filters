@@ -15,15 +15,15 @@
     </Filter>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="coreclrhost.h">
+    <CopyFileToFolders Include="..\Hello\bin\Debug\netcoreapp3.1\Hello.dll" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="clrhost.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
-    <CopyFileToFolders Include="..\Hello\bin\Debug\netcoreapp3.1\Hello.dll" />
-  </ItemGroup>
-  <ItemGroup>
-    <ClCompile Include="coreclrhost.cpp">
+    <ClCompile Include="clrhost.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>

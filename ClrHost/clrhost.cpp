@@ -1,14 +1,14 @@
-
 // Include
-#include "coreclrhost.h"
+#include "clrhost.h"
 
+// Using namespace
 using namespace std;
 
-
+// Define
 #define APPDLL_FILE_NAME "Hello.dll"
 
+// Typedef
 typedef char* (*managed_ptr)(void);
-
 
 //-----------------------------------------------------------------------------
 string get_application_path()
@@ -31,7 +31,7 @@ string get_application_path()
 string get_runtime_path()
 //-----------------------------------------------------------------------------
 {
-	return string("c:\\Program Files\\dotnet\\shared\\Microsoft.NETCore.App\\3.1.6\\");
+	return string(CORECLR_PATH);
 }
 
 //-----------------------------------------------------------------------------
@@ -56,8 +56,9 @@ vector<string> get_dll_files_from_dll(string dirname)
 int main(int argc, char* argv[])
 //-----------------------------------------------------------------------------
 {
-
+	//
 	// Initialize Paths
+	//
 	string app_path = get_application_path();
 	string runtime_path = get_runtime_path();
 
@@ -69,17 +70,17 @@ int main(int argc, char* argv[])
 
 
 	//
-	// Load coreclr
+	// Load coreclr dll
 	//
 	HMODULE hm_coreclr = LoadLibraryExA(coreclr_path.c_str(), NULL, 0);
 	if (hm_coreclr == 0)
 	{
-		printf("ERROR: Failed to load coreclr from %s\n", coreclr_path.c_str());
+		printf("ERROR: Load from %s\n", coreclr_path.c_str());
 		return -1;
 	}
 	else
 	{
-		printf("INFO: Loaded coreclr from %s\n", coreclr_path.c_str());
+		printf("INFO: Load from %s\n", coreclr_path.c_str());
 	}
 
 	//
@@ -125,12 +126,12 @@ int main(int argc, char* argv[])
 	//
 	// Set app domain properties
 	//
-	const char* propertyKeys[] = {
+	const char* property_keys[] = {
 				"APPBASE",
 				"TRUSTED_PLATFORM_ASSEMBLIES",
 				"APP_PATHS"
 	};
-	const char* propertyValues[] = {
+	const char* property_values[] = {
 		// APPBASE
 		app_path.c_str(),
 		// TRUSTED_PLATFORM_ASSEMBLIES
@@ -139,28 +140,30 @@ int main(int argc, char* argv[])
 		app_path.c_str()
 	};
 
+	//
 	//Initialize the CoreCLR.Creates and starts CoreCLR hostand creates an app domain
-	void* hostHandle;
-	unsigned int domainId;
+	//
+	void* host_handle;
+	unsigned int domain_id;
 
 	int hr = p_coreclr_initialize(
 		coreclr_path.c_str(),        // App base path
 		"CoreClrHost",       // AppDomain friendly name
-		sizeof(propertyKeys) / sizeof(char*),   // Property count
-		propertyKeys,       // Property names
-		propertyValues,     // Property values
-		&hostHandle,        // Host handle
-		&domainId);         // AppDomain ID
+		sizeof(property_keys) / sizeof(char*),   // Property count
+		property_keys,       // Property names
+		property_values,     // Property values
+		&host_handle,        // Host handle
+		&domain_id);         // AppDomain ID
 
 
 	if (FAILED(hr))
 	{
-		printf("ERROR: coreclr_initialize failed 0x%08x\n", hr);
+		printf("ERROR: Initialize - 0x%08x\n", hr);
 		return -1;
 	}
 	else
 	{
-		printf("INFO: coreclr_initialize\n");
+		printf("INFO: Initialize\n");
 	}
 
 	//
@@ -169,8 +172,8 @@ int main(int argc, char* argv[])
 	managed_ptr p_managed;
 
 	hr = p_create_managed_delegate(
-		hostHandle,
-		domainId,
+		host_handle, // Host handle
+		domain_id,  // AppDomain ID
 		"Hello", // Assembly Name 
 		"Hello.Program", // Namespace.Class
 		"Main", // Static Method
@@ -179,12 +182,12 @@ int main(int argc, char* argv[])
 
 	if (FAILED(hr))
 	{
-		printf("ERROR: coreclr_create_delegate failed\n");
+		printf("ERROR: Create delegate - 0x%08x\n", hr);		
 		return -1;
 	}
 	else
 	{
-		printf("INFO: coreclr_create_delegate failed - status: 0x%08x\n", hr);
+		printf("INFO: Create delegate\n");
 	}
 
 	//
@@ -192,57 +195,32 @@ int main(int argc, char* argv[])
 	//
 	if (p_managed == 0)
 	{
-		printf("ERROR: p_managed invalid\n");
+		printf("ERROR: Delegate invalid\n");
 		return -1;
 	}
 	else
 	{
-		printf("INFO: p_managed valid\n");
+		printf("INFO: Delegate valid\n");
 	}
+
+	printf("INFO: Call delegate...\n");
 
 	p_managed();
 
 	//
 	// Shutdown CoreCLR. It unloads the app domain and stops the CoreCLR host.
 	//
-	hr = p_shutdown_coreclr(hostHandle, domainId);
+	hr = p_shutdown_coreclr(host_handle, domain_id);
 	if (FAILED(hr))
 	{
-		printf("ERROR: coreclr_shutdown failed - status: 0x%08x\n", hr);
+		printf("ERROR: Shutdown failed - 0x%08x\n", hr);
 	}
 	else
 	{
-		printf("INFO: coreclr_shutdown\n");
+		printf("INFO: Shutdown\n");
 		return -1;
 	}
 
 	return 0;
 }
-
-
-
-/*
-void LoadDll()
-{
-	FILE* pFile;
-	long lSize;
-	char* buffer;
-	size_t result;
-
-	pFile = fopen("hello.bin", "rb");
-	if (pFile == NULL) { fputs("File error", stderr); exit(1); }
-
-	// obtain file size:
-	fseek(pFile, 0, SEEK_END);
-	lSize = ftell(pFile);
-	rewind(pFile);
-
-	// allocate memory to contain the whole file:
-	buffer = (char*)malloc(sizeof(char) * lSize);
-	if (buffer == NULL) { fputs("Memory error", stderr); exit(2); }
-
-	// copy the file into the buffer:
-	result = fread(buffer, 1, lSize, pFile);
-
-}*/
 

@@ -331,3 +331,4 @@ ASALocalRun/
 
 *.log
 *.tlog
+netcoreapp3.1/*

@@ -16,7 +16,6 @@ c:\Project\PadarCom\Source\ClrHost\Hello\bin\Debug\netcoreapp3.1\Hello.runtimeco
 c:\Project\PadarCom\Source\ClrHost\Hello\bin\Debug\netcoreapp3.1\Hello.runtimeconfig.dev.json
 c:\Project\PadarCom\Source\ClrHost\Hello\bin\Debug\netcoreapp3.1\Hello.dll
 c:\Project\PadarCom\Source\ClrHost\Hello\bin\Debug\netcoreapp3.1\Hello.pdb
-c:\Project\PadarCom\Source\ClrHost\Hello\obj\Debug\netcoreapp3.1\Hello.csprojAssemblyReference.cache
 c:\Project\PadarCom\Source\ClrHost\Hello\obj\Debug\netcoreapp3.1\Hello.AssemblyInfoInputs.cache
 c:\Project\PadarCom\Source\ClrHost\Hello\obj\Debug\netcoreapp3.1\Hello.AssemblyInfo.cs
 c:\Project\PadarCom\Source\ClrHost\Hello\obj\Debug\netcoreapp3.1\Hello.csproj.CoreCompileInputs.cache
