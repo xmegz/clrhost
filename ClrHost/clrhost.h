@@ -6,6 +6,10 @@
 #include <windows.h>
 #include <vector>
 
+#include <ios>
+#include <iosfwd>
+#include <iostream>
+#include <strstream>
 
 // Environment
 #define FS_SEPARATOR "\\"

@@ -10,7 +10,10 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution 
 		.gitignore = .gitignore
 	EndProjectSection
 EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "CoreClrHost", "ClrHost\clrhost.vcxproj", "{4F9AC4CD-A6AA-491D-AC48-435553356B6F}"
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "ClrHost", "ClrHost\clrhost.vcxproj", "{4F9AC4CD-A6AA-491D-AC48-435553356B6F}"
+	ProjectSection(ProjectDependencies) = postProject
+		{9266A3DE-E43D-471B-A290-96BE23150D4D} = {9266A3DE-E43D-471B-A290-96BE23150D4D}
+	EndProjectSection
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

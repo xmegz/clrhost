@@ -24,7 +24,7 @@
     <ProjectGuid>{4f9ac4cd-a6aa-491d-ac48-435553356b6f}</ProjectGuid>
     <RootNamespace>StartClr</RootNamespace>
     <WindowsTargetPlatformVersion>10.0</WindowsTargetPlatformVersion>
-    <ProjectName>CoreClrHost</ProjectName>
+    <ProjectName>ClrHost</ProjectName>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="Configuration">

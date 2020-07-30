@@ -128,12 +128,15 @@ int main(int argc, char* argv[])
 	//
 	const char* property_keys[] = {
 				"APPBASE",
+				"APP_NAME",
 				"TRUSTED_PLATFORM_ASSEMBLIES",
 				"APP_PATHS"
 	};
 	const char* property_values[] = {
 		// APPBASE
 		app_path.c_str(),
+		// APP_NAME
+		"CLRHOST",
 		// TRUSTED_PLATFORM_ASSEMBLIES
 		tpa_list.c_str(),
 		// APP_PATHS
@@ -148,7 +151,7 @@ int main(int argc, char* argv[])
 
 	int hr = p_coreclr_initialize(
 		coreclr_path.c_str(),        // App base path
-		"CoreClrHost",       // AppDomain friendly name
+		"DefaultDomain",       // AppDomain friendly name
 		sizeof(property_keys) / sizeof(char*),   // Property count
 		property_keys,       // Property names
 		property_values,     // Property values
@@ -205,7 +208,10 @@ int main(int argc, char* argv[])
 
 	printf("INFO: Call delegate...\n");
 
+	
+
 	p_managed();
+
 
 	//
 	// Shutdown CoreCLR. It unloads the app domain and stops the CoreCLR host.
@@ -220,6 +226,7 @@ int main(int argc, char* argv[])
 		printf("INFO: Shutdown\n");
 		return -1;
 	}
+
 
 	return 0;
 }
