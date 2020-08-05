@@ -1,2 +1,2 @@
 # .Net Core Application Host Start
-HostClr
+C++ part and C# part debugging is also possible.
