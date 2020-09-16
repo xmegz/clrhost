@@ -9,6 +9,6 @@ https://github.com/dotnet/coreclr/blob/release/3.1/src/vm/corhost.cpp
 https://github.com/dotnet/coreclr/blob/release/3.1/src/binder/applicationcontext.cpp
 https://github.com/dotnet/coreclr/blob/release/3.1/src/dlls/mscoree/unixinterface.cpp
 
-## Sample Host Example
+## Sample Host Example Project
 https://github.com/dotnet/samples/tree/master/core/hosting/HostWithCoreClrHost
 
