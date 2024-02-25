@@ -16,9 +16,9 @@
 #define PATH_DELIMITER ";"
 
 #if defined(_WIN32) && defined(_M_IX86)
-#define CORECLR_PATH "c:\\Program Files (x86)\\dotnet\\shared\\Microsoft.NETCore.App\\3.1.6\\"
+#define CORECLR_PATH "c:\\Program Files (x86)\\dotnet\\shared\\Microsoft.NETCore.App\\3.1.32\\"
 #else
-#define CORECLR_PATH "c:\\Program Files\\dotnet\\shared\\Microsoft.NETCore.App\\3.1.6\\"
+#define CORECLR_PATH "c:\\Program Files\\dotnet\\shared\\Microsoft.NETCore.App\\3.1.32\\"
 #endif
 
 #define CORECLR_FILE_NAME "coreclr.dll"
