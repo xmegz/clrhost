@@ -29,7 +29,7 @@
 // https://github.com/dotnet/coreclr/blob/release/3.1/src/binder/applicationcontext.cpp
 // https://github.com/dotnet/coreclr/blob/release/3.1/src/dlls/mscoree/unixinterface.cpp
 
-// Retrieved from https://github.com/dotnet/coreclr/blob/master/src/coreclr/hosts/inc/coreclrhost.h
+// Retrieved from https://github.com/dotnet/samples/blob/main/core/hosting/src/NativeHost/inc/coreclr_delegates.h
 
 // Licensed to the .NET Foundation under one or more agreements.
 // The .NET Foundation licenses this file to you under the MIT license.
