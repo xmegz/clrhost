@@ -1,25 +1,39 @@
-﻿using System;
-using System.IO;
-using System.Runtime.InteropServices.ComTypes;
-using System.Runtime.Loader;
+﻿using Microsoft.Extensions.Logging;
+using System;
+using System.Reflection;
+using System.Text.Json;
 
 namespace Hello
 {
-    
-    public class Program   
+    public record Data(int Id, string Name)
     {
-        static int num = 0;
+        public static void Test()
+        {
+            var str = JsonSerializer.Serialize(new Data(0, "Name"));
 
+            var factory = LoggerFactory.Create(builder =>
+            {
+                builder.AddConsole();
+            });
+            var logger = factory.CreateLogger<Data>();
+
+            logger?.LogInformation("Test Start");
+            logger?.LogInformation(str);
+            logger?.LogInformation("Test End!");
+        }
+    };
+    public class Program
+    {
         static Program()
         {
-            Console.WriteLine("Start");
+            Console.WriteLine($"Program {Assembly.GetExecutingAssembly().FullName}");
         }
-      
+
         public static void Main()
         {
-            
-            Console.WriteLine("Hello World! 2");
-            Console.WriteLine(num++);
-        }        
+            Console.WriteLine("Main Start!");
+            Data.Test();
+            Console.WriteLine("Main End!");
+        }
     }
 }

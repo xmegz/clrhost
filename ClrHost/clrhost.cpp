@@ -209,9 +209,7 @@ int main(int argc, char* argv[])
 	printf("INFO: Call delegate...\n");
 
 	
-
 	p_managed();
-
 
 	//
 	// Shutdown CoreCLR. It unloads the app domain and stops the CoreCLR host.
@@ -226,7 +224,6 @@ int main(int argc, char* argv[])
 		printf("INFO: Shutdown\n");
 		return -1;
 	}
-
 
 	return 0;
 }
