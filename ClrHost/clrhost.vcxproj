@@ -91,7 +91,7 @@
     <ClCompile>
       <WarningLevel>Level3</WarningLevel>
       <SDLCheck>true</SDLCheck>
-      <PreprocessorDefinitions>WIN32;_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>WINDOWS;WIN32;_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
     </ClCompile>
     <Link>
@@ -120,7 +120,7 @@
     <ClCompile>
       <WarningLevel>Level3</WarningLevel>
       <SDLCheck>true</SDLCheck>
-      <PreprocessorDefinitions>_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>WINDOWS;_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
     </ClCompile>
     <Link>
@@ -146,18 +146,16 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="clrhost.cpp" />
+    <ClCompile Include="pal.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="clrhost.h" />
-    <ClInclude Include="resource.h" />
+    <ClInclude Include="pal.h" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\Hello\Hello.csproj">
       <Project>{9266a3de-e43d-471b-a290-96be23150d4d}</Project>
     </ProjectReference>
-  </ItemGroup>
-  <ItemGroup>
-    <ResourceCompile Include="ClrHost.rc" />
   </ItemGroup>
   <ItemGroup>
     <None Include="..\Hello\bin\Debug\net8.0\Hello.dll" />

@@ -1,39 +1,10 @@
-// Include
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
-#include <string>
-#include <windows.h>
-#include <vector>
-
-#include <ios>
-#include <iosfwd>
-#include <iostream>
-#include <strstream>
-
-// Environment
-#define FS_SEPARATOR "\\"
-#define PATH_DELIMITER ";"
-
-#if defined(_WIN32) && defined(_M_IX86)
-#define CORECLR_PATH "c:\\Program Files (x86)\\dotnet\\shared\\Microsoft.NETCore.App\\8.0.2\\"
-#else
-#define CORECLR_PATH "c:\\Program Files\\dotnet\\shared\\Microsoft.NETCore.App\\8.0.2\\"
-#endif
-
-#define CORECLR_FILE_NAME "coreclr.dll"
-
-
-// APIs for hosting CoreCLR
-// https://github.com/dotnet/coreclr/blob/release/3.1/src/vm/corhost.cpp
-// https://github.com/dotnet/coreclr/blob/release/3.1/src/binder/applicationcontext.cpp
-// https://github.com/dotnet/coreclr/blob/release/3.1/src/dlls/mscoree/unixinterface.cpp
-
-// Retrieved from https://github.com/dotnet/samples/blob/main/core/hosting/src/NativeHost/inc/coreclr_delegates.h
-
+// Loaded from https://github.com/dotnet/runtime/blob/main/src/coreclr/hosts/inc/coreclrhost.h
 // Licensed to the .NET Foundation under one or more agreements.
 // The .NET Foundation licenses this file to you under the MIT license.
-// See the LICENSE file in the project root for more information.
+
+//
+// APIs for hosting CoreCLR
+//
 
 #ifndef __CORECLR_HOST_H__
 #define __CORECLR_HOST_H__
@@ -43,6 +14,8 @@
 #else
 #define CORECLR_CALLING_CONVENTION
 #endif
+
+#include <stdint.h>
 
 // For each hosting API, we define a function prototype and a function pointer
 // The prototype is useful for implicit linking against the dynamic coreclr
@@ -61,19 +34,37 @@
 //  propertyKeys            - Keys of properties of the app domain
 //  propertyValues          - Values of properties of the app domain
 //  hostHandle              - Output parameter, handle of the created host
-//  domainId                - Output parameter, id of the created app domain 
+//  domainId                - Output parameter, id of the created app domain
 //
 // Returns:
 //  HRESULT indicating status of the operation. S_OK if the assembly was successfully executed
 //
 CORECLR_HOSTING_API(coreclr_initialize,
-	const char* exePath,
-	const char* appDomainFriendlyName,
-	int propertyCount,
-	const char** propertyKeys,
-	const char** propertyValues,
-	void** hostHandle,
-	unsigned int* domainId);
+    const char* exePath,
+    const char* appDomainFriendlyName,
+    int propertyCount,
+    const char** propertyKeys,
+    const char** propertyValues,
+    void** hostHandle,
+    unsigned int* domainId);
+
+//
+// Type of the callback function that can be set by the coreclr_set_error_writer
+//
+typedef void (*coreclr_error_writer_callback_fn) (const char* message);
+
+//
+// Set callback for writing error logging
+//
+// Parameters:
+//  errorWriter             - callback that will be called for each line of the error info
+//                          - passing in NULL removes a callback that was previously set
+//
+// Returns:
+//  S_OK
+//
+CORECLR_HOSTING_API(coreclr_set_error_writer,
+    coreclr_error_writer_callback_fn errorWriter);
 
 //
 // Shutdown CoreCLR. It unloads the app domain and stops the CoreCLR host.
@@ -86,8 +77,8 @@ CORECLR_HOSTING_API(coreclr_initialize,
 //  HRESULT indicating status of the operation. S_OK if the assembly was successfully executed
 //
 CORECLR_HOSTING_API(coreclr_shutdown,
-	void* hostHandle,
-	unsigned int domainId);
+    void* hostHandle,
+    unsigned int domainId);
 
 //
 // Shutdown CoreCLR. It unloads the app domain and stops the CoreCLR host.
@@ -101,16 +92,16 @@ CORECLR_HOSTING_API(coreclr_shutdown,
 //  HRESULT indicating status of the operation. S_OK if the assembly was successfully executed
 //
 CORECLR_HOSTING_API(coreclr_shutdown_2,
-	void* hostHandle,
-	unsigned int domainId,
-	int* latchedExitCode);
+    void* hostHandle,
+    unsigned int domainId,
+    int* latchedExitCode);
 
 //
 // Create a native callable function pointer for a managed method.
 //
 // Parameters:
 //  hostHandle              - Handle of the host
-//  domainId                - Id of the domain 
+//  domainId                - Id of the domain
 //  entryPointAssemblyName  - Name of the assembly which holds the custom entry point
 //  entryPointTypeName      - Name of the type which holds the custom entry point
 //  entryPointMethodName    - Name of the method which is the custom entry point
@@ -120,19 +111,19 @@ CORECLR_HOSTING_API(coreclr_shutdown_2,
 //  HRESULT indicating status of the operation. S_OK if the assembly was successfully executed
 //
 CORECLR_HOSTING_API(coreclr_create_delegate,
-	void* hostHandle,
-	unsigned int domainId,
-	const char* entryPointAssemblyName,
-	const char* entryPointTypeName,
-	const char* entryPointMethodName,
-	void** delegate);
+    void* hostHandle,
+    unsigned int domainId,
+    const char* entryPointAssemblyName,
+    const char* entryPointTypeName,
+    const char* entryPointMethodName,
+    void** delegate);
 
 //
 // Execute a managed assembly with given arguments
 //
 // Parameters:
 //  hostHandle              - Handle of the host
-//  domainId                - Id of the domain 
+//  domainId                - Id of the domain
 //  argc                    - Number of arguments passed to the executed assembly
 //  argv                    - Array of arguments passed to the executed assembly
 //  managedAssemblyPath     - Path of the managed assembly to execute (or NULL if using a custom entrypoint).
@@ -142,13 +133,20 @@ CORECLR_HOSTING_API(coreclr_create_delegate,
 //  HRESULT indicating status of the operation. S_OK if the assembly was successfully executed
 //
 CORECLR_HOSTING_API(coreclr_execute_assembly,
-	void* hostHandle,
-	unsigned int domainId,
-	int argc,
-	const char** argv,
-	const char* managedAssemblyPath,
-	unsigned int* exitCode);
+    void* hostHandle,
+    unsigned int domainId,
+    int argc,
+    const char** argv,
+    const char* managedAssemblyPath,
+    unsigned int* exitCode);
 
 #undef CORECLR_HOSTING_API
+
+//
+// Callback types used by the hosts
+//
+typedef bool(CORECLR_CALLING_CONVENTION BundleProbeFn)(const char* path, int64_t* offset, int64_t* size, int64_t* compressedSize);
+typedef const void* (CORECLR_CALLING_CONVENTION PInvokeOverrideFn)(const char* libraryName, const char* entrypointName);
+
 
 #endif // __CORECLR_HOST_H__

@@ -1,127 +1,108 @@
 // Include
-#include "clrhost.h"
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <assert.h>
+#include <string>
+#include <windows.h>
+#include <vector>
+
+#include <ios>
+#include <iosfwd>
+#include <iostream>
+#include <strstream>
 
 // Using namespace
 using namespace std;
 
+#include "clrhost.h"
+#include "pal.h"
+
+
 // Define
+#define PATH_DELIMITER ";"
 #define APPDLL_FILE_NAME "Hello.dll"
+#define DOTNET_VERSION 8
 
 // Typedef
 typedef char* (*managed_ptr)(void);
 
-//-----------------------------------------------------------------------------
-string get_application_path()
-//-----------------------------------------------------------------------------
-{
-	HRESULT hr = S_OK;
-
-	char buffer[MAX_PATH] = { 0 };
-
-	hr = GetModuleFileNameA(NULL, buffer, MAX_PATH);
-
-	if (FAILED(hr))
-		return string();
-
-	string::size_type pos = string(buffer).find_last_of("\\/");
-	return std::string(buffer).substr(0, pos + 1);
-}
-
-//-----------------------------------------------------------------------------
-string get_runtime_path()
-//-----------------------------------------------------------------------------
-{
-	return string(CORECLR_PATH);
-}
-
-//-----------------------------------------------------------------------------
-vector<string> get_dll_files_from_dll(string dirname)
-//-----------------------------------------------------------------------------
-{
-	vector<string> result;
-	dirname.append("*.dll");
-
-	WIN32_FIND_DATAA ffd;
-	HANDLE h = ::FindFirstFileA(dirname.c_str(), &ffd);
-
-	result.push_back(string(ffd.cFileName));
-
-	while (FindNextFileA(h, &ffd))
-		result.push_back(string(ffd.cFileName));
-
-	return result;
-}
 
 //-----------------------------------------------------------------------------
 int main(int argc, char* argv[])
 //-----------------------------------------------------------------------------
 {
+	PalPaths Paths;
+	
 	//
-	// Initialize Paths
+	// Initialize paths
 	//
-	string app_path = get_application_path();
-	string runtime_path = get_runtime_path();
+	printf("[INFO] Initialize paths\n");
 
-	string coreclr_path = string(runtime_path);
-	coreclr_path.append(CORECLR_FILE_NAME);
-
-	string appdll_path = string(app_path);
-	appdll_path.append(APPDLL_FILE_NAME);
+	pal_get_pal_paths(&Paths, DOTNET_VERSION, APPDLL_FILE_NAME);
 
 
 	//
 	// Load coreclr dll
 	//
-	HMODULE hm_coreclr = LoadLibraryExA(coreclr_path.c_str(), NULL, 0);
-	if (hm_coreclr == 0)
+	void* hm_coreclr = pal_load_library(Paths.CoreCrlFileFullPath.c_str());
+	if (hm_coreclr == NULL)
 	{
-		printf("ERROR: Load from %s\n", coreclr_path.c_str());
+		printf("[ERROR] Load coreclr from %s\n", Paths.CoreCrlFileFullPath.c_str());
 		return -1;
 	}
 	else
 	{
-		printf("INFO: Load from %s\n", coreclr_path.c_str());
+		printf("[INFO] Load coreclr from %s\n", Paths.CoreCrlFileFullPath.c_str());
 	}
 
 	//
 	// Set coreclr API host function pointers
 	//
-	coreclr_initialize_ptr p_coreclr_initialize = (coreclr_initialize_ptr)GetProcAddress(hm_coreclr, "coreclr_initialize");
-	coreclr_create_delegate_ptr p_create_managed_delegate = (coreclr_create_delegate_ptr)GetProcAddress(hm_coreclr, "coreclr_create_delegate");
-	coreclr_shutdown_ptr p_shutdown_coreclr = (coreclr_shutdown_ptr)GetProcAddress(hm_coreclr, "coreclr_shutdown");
+	printf("[INFO] Set coreclr API host function pointers\n");
+
+	coreclr_initialize_ptr p_coreclr_initialize = (coreclr_initialize_ptr)pal_get_export(hm_coreclr, "coreclr_initialize");
+	coreclr_create_delegate_ptr p_create_managed_delegate = (coreclr_create_delegate_ptr)pal_get_export(hm_coreclr, "coreclr_create_delegate");
+	coreclr_shutdown_ptr p_shutdown_coreclr = (coreclr_shutdown_ptr)pal_get_export(hm_coreclr, "coreclr_shutdown");
 
 
 	if (p_coreclr_initialize == NULL)
 	{
-		printf("ERROR: coreclr_initialize not found");
+		printf("[ERROR] coreclr_initialize not found\n");
 		return -1;
 	}
 
 	if (p_create_managed_delegate == NULL)
 	{
-		printf("ERROR: coreclr_create_delegate not found");
+		printf("[ERROR] coreclr_create_delegate not found\n");
 		return -1;
 	}
 
 	if (p_shutdown_coreclr == NULL)
 	{
-		printf("ERROR: coreclr_shutdown not found");
+		printf("[ERROR] coreclr_shutdown not found\n");
 		return -1;
 	}
 
 	//
 	// Find and set trusted platform assemblies
 	//
-	vector<string> files = get_dll_files_from_dll(runtime_path.c_str());
+	printf("[INFO] Find and set trusted platform assemblies\n");
+
+	vector<string> files;
+	pal_get_dll_list_for_tpa(&files, Paths.RuntimeDirPath.c_str());
+	pal_get_dll_list_for_tpa(&files, Paths.AspNetDirPath.c_str());
 	string tpa_list;
 
 	for (unsigned int i = 0; i < files.size(); i++)
-	{
-		tpa_list.append(runtime_path);
-		tpa_list.append(FS_SEPARATOR);
+	{		
 		tpa_list.append(files[i]);
 		tpa_list.append(PATH_DELIMITER);
+		//printf("%s\r\n",files[i].c_str());
 	}
+
+	printf("[INFO] Found %zd tpa assemblies\n", files.size());
+
 
 	//
 	// Set app domain properties
@@ -133,24 +114,21 @@ int main(int argc, char* argv[])
 				"APP_PATHS"
 	};
 	const char* property_values[] = {
-		// APPBASE
-		app_path.c_str(),
-		// APP_NAME
-		"CLRHOST",
-		// TRUSTED_PLATFORM_ASSEMBLIES
-		tpa_list.c_str(),
-		// APP_PATHS
-		app_path.c_str()
+		
+		Paths.AppDirPath.c_str(),// APPBASE		
+		"CLRHOST",// APP_NAME		
+		tpa_list.c_str(),// TRUSTED_PLATFORM_ASSEMBLIES		
+		Paths.AppDirPath.c_str()// APP_PATHS
 	};
 
 	//
-	//Initialize the CoreCLR.Creates and starts CoreCLR hostand creates an app domain
+	//Initialize the CoreCLR. Creates and starts CoreCLR hostand creates an app domain
 	//
 	void* host_handle;
 	unsigned int domain_id;
 
 	int hr = p_coreclr_initialize(
-		coreclr_path.c_str(),        // App base path
+		Paths.AppDirPath.c_str(),        // App base path
 		"DefaultDomain",       // AppDomain friendly name
 		sizeof(property_keys) / sizeof(char*),   // Property count
 		property_keys,       // Property names
@@ -161,16 +139,16 @@ int main(int argc, char* argv[])
 
 	if (FAILED(hr))
 	{
-		printf("ERROR: Initialize - 0x%08x\n", hr);
+		printf("[ERROR] Initialize - 0x%08x\n", hr);
 		return -1;
 	}
 	else
 	{
-		printf("INFO: Initialize\n");
+		printf("[INFO] Initialize\n");
 	}
 
 	//
-	//Create a native callable function pointer for a managed method.
+	// Create a native callable function pointer for a managed method.
 	//
 	managed_ptr p_managed;
 
@@ -185,28 +163,28 @@ int main(int argc, char* argv[])
 
 	if (FAILED(hr))
 	{
-		printf("ERROR: Create delegate - 0x%08x\n", hr);		
+		printf("[ERROR] Create delegate - 0x%08x\n", hr);		
 		return -1;
 	}
 	else
 	{
-		printf("INFO: Create delegate\n");
+		printf("[INFO] Create delegate\n");
 	}
 
 	//
 	// Call managed method
 	//
-	if (p_managed == 0)
+	if (p_managed == NULL)
 	{
-		printf("ERROR: Delegate invalid\n");
+		printf("[ERROR] Delegate invalid\n");
 		return -1;
 	}
 	else
 	{
-		printf("INFO: Delegate valid\n");
+		printf("[INFO] Delegate valid\n");
 	}
 
-	printf("INFO: Call delegate...\n");
+	printf("[INFO] Call delegate...\n");
 
 	
 	p_managed();
@@ -217,14 +195,13 @@ int main(int argc, char* argv[])
 	hr = p_shutdown_coreclr(host_handle, domain_id);
 	if (FAILED(hr))
 	{
-		printf("ERROR: Shutdown failed - 0x%08x\n", hr);
+		printf("[ERROR] Shutdown failed - 0x%08x\n", hr);
 	}
 	else
 	{
-		printf("INFO: Shutdown\n");
+		printf("[INFO] Shutdown\n");
 		return -1;
 	}
 
 	return 0;
 }
-
