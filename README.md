@@ -123,3 +123,32 @@ File Type: DLL
           2    9 00488740 g_CLREngineMetrics
          12    A 004051C0 g_dacTable
 ```
+Native entry point
+https://github.com/smx-smx/EzDotnet
+```
+namespace ManagedSample
+{
+	public class EntryPoint {
+		private static string[] ReadArgv(IntPtr args, int sizeBytes) {
+			int nargs = sizeBytes / IntPtr.Size;
+			string[] argv = new string[nargs];
+			
+			for(int i=0; i<nargs; i++, args += IntPtr.Size) {
+				IntPtr charPtr = Marshal.ReadIntPtr(args);
+				argv[i] = Marshal.PtrToStringAnsi(charPtr);
+			}
+			return argv;
+		}
+		
+		private static int Entry(IntPtr args, int sizeBytes) {
+			string[] argv = ReadArgv(args, sizeBytes);
+			Main(argv);
+			return 0;
+		}
+
+		public static void Main(string[] args){
+			Console.WriteLine("Hello, World");
+		}
+	}
+}
+```

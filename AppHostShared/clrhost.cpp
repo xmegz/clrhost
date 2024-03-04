@@ -27,8 +27,23 @@ using namespace std;
 #define APPDLL_FILE_NAME "Hello.dll"
 #define DOTNET_VERSION 8
 
-// Typedef
-typedef char* (*managed_ptr)(void);
+/*
+AssemblyName("System.Private.CoreLib");
+TypeName("Internal.Runtime.InteropServices.ComponentActivator");
+MethodName("LoadAssemblyBytes");
+*/
+
+typedef int (CORECLR_CALLING_CONVENTION* AssemblyLoadEnrtyPoint)(
+	const void* assembly_bytes      /* Bytes of the assembly to load */,
+	size_t     assembly_bytes_len   /* Byte length of the assembly to load */,
+	const void* symbols_bytes       /* Optional. Bytes of the symbols for the assembly */,
+	size_t     symbols_bytes_len    /* Optional. Byte length of the symbols for the assembly */,
+	void* load_context        /* Extensibility parameter (currently unused and must be 0) */,
+	void* reserved            /* Extensibility parameter (currently unused and must be 0) */);
+
+typedef int (CORECLR_CALLING_CONVENTION* NativeEntryPoint)(
+	int argc
+	,char* argv[]);
 
 // Enum
 enum error
@@ -124,15 +139,15 @@ int main(int argc, char* argv[])
 	//
 	// Create a native callable function pointer for a managed method.
 	//
-	managed_ptr p_managed = NULL;
+	NativeEntryPoint PtrNativeEntryPoint = NULL;
 
 	hr = Pointers.PtrCreateDelegate(
 		host_handle,			// Host handle
 		domain_id,				// AppDomain ID
 		"Hello",				// Assembly Name 
 		"Hello.Program",		// Namespace.Class
-		"Main",					// Static Method
-		(void**)&p_managed);	// Pointer to managed method
+		"NativeEntryPoint",		// Static Method
+		(void**)&PtrNativeEntryPoint);	// Pointer to managed method
 
 
 	if (FAILED(hr))	
@@ -144,14 +159,14 @@ int main(int argc, char* argv[])
 	//
 	// Call managed method
 	//
-	if (p_managed == NULL)	
+	if (PtrNativeEntryPoint == NULL)
 		error(error::delegate, "Delegate invalid\n");			
 	else	
 		info("Delegate OK\n");	
 
 	info("Call delegate...\n");
 
-	p_managed();
+	PtrNativeEntryPoint(argc,argv);
 
 	int exitCode;
 

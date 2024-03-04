@@ -1,6 +1,7 @@
 ﻿using Microsoft.Extensions.Logging;
 using System;
 using System.Reflection;
+using System.Runtime.InteropServices;
 using System.Text.Json;
 
 namespace Hello
@@ -24,16 +25,38 @@ namespace Hello
     };
     public class Program
     {
-        static Program()
+        [UnmanagedCallersOnly]
+        private static void NativeEntryPoint(int argc, IntPtr argv)
         {
-            Console.WriteLine($"Program {Assembly.GetExecutingAssembly().FullName}");
+            string[] MarshalArgv(int argc, IntPtr argv)
+            {
+                string[] args = new string[argc];
+
+                for (int i = 0; i < argc; i++, argv += IntPtr.Size)
+                    args[i] = Marshal.PtrToStringAnsi(Marshal.ReadIntPtr(argv));
+
+                return args;
+            }
+
+            string[] args = MarshalArgv(argc, argv);
+            
+            Main(args);
         }
 
-        public static void Main()
+        static Program()
         {
-            Console.WriteLine($"Main Start! {DateTime.Now}");
+            Console.WriteLine($"Program.Ctor {Assembly.GetExecutingAssembly().FullName}");
+        }
+
+        public static void Main(string[] arg)
+        {
+            Console.WriteLine($"Program.Main! {DateTime.Now}");
+            foreach (var i in arg)
+            {
+                Console.WriteLine($"Arg: {i}");
+            }
+
             Data.Test();
-            Console.WriteLine("Main End!");
             Environment.ExitCode = 11;
         }
     }
