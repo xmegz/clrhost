@@ -43,7 +43,7 @@ typedef int (CORECLR_CALLING_CONVENTION* AssemblyLoadEnrtyPoint)(
 
 typedef int (CORECLR_CALLING_CONVENTION* NativeEntryPoint)(
 	int argc
-	,char* argv[]);
+	,const char* argv[]);
 
 // Enum
 enum error
@@ -81,7 +81,7 @@ static inline void error(int code, const char* format, ...)
 }
 
 //-----------------------------------------------------------------------------
-int main(int argc, char* argv[])
+int main(int argc, const char* argv[])
 //-----------------------------------------------------------------------------
 {
 	PalPaths Paths;
