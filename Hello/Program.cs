@@ -31,7 +31,7 @@ namespace Hello
 
         public static void Main()
         {
-            Console.WriteLine("Main Start!");
+            Console.WriteLine($"Main Start! {DateTime.Now}");
             Data.Test();
             Console.WriteLine("Main End!");
             Environment.ExitCode = 11;
