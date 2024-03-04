@@ -20,5 +20,9 @@
   <ItemGroup>
     <ClInclude Include="$(MSBuildThisFileDirectory)coreclrhost.h" />
     <ClInclude Include="$(MSBuildThisFileDirectory)pal.h" />
+    <ClInclude Include="$(MSBuildThisFileDirectory)resource.h" />
+  </ItemGroup>
+  <ItemGroup>
+    <ResourceCompile Include="$(MSBuildThisFileDirectory)Resource.rc" />
   </ItemGroup>
 </Project>

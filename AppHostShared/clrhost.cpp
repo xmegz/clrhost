@@ -42,8 +42,9 @@ typedef int (CORECLR_CALLING_CONVENTION* AssemblyLoadEnrtyPoint)(
 	void* reserved            /* Extensibility parameter (currently unused and must be 0) */);
 
 typedef int (CORECLR_CALLING_CONVENTION* NativeEntryPoint)(
-	int argc
-	,const char* argv[]);
+	int argc, /* Argument count */
+	const char* argv[] /*Argument value */
+	);
 
 // Enum
 enum error
@@ -62,7 +63,7 @@ static inline void info(const char* format, ...)
 
 	va_list args;
 	va_start(args, format);
-	vprintf(format, args);
+	vfprintf(stdout,format, args);
 	va_end(args);
 }
 
@@ -74,7 +75,7 @@ static inline void error(int code, const char* format, ...)
 
 	va_list args;
 	va_start(args, format);
-	vprintf(format, args);
+	vfprintf(stderr,format, args);
 	va_end(args);
 
 	exit(code);
@@ -135,6 +136,45 @@ int main(int argc, const char* argv[])
 	else	
 		info("Initialize OK\n");
 	
+	//
+	// Create a native callable function pointer for a managed method.
+	//
+	AssemblyLoadEnrtyPoint PtrAssemblyLoadEnrtyPoint = NULL;
+
+	hr = Pointers.PtrCreateDelegate(
+		host_handle,			// Host handle
+		domain_id,				// AppDomain ID
+		"System.Private.CoreLib",				// Assembly Name 
+		"Internal.Runtime.InteropServices.ComponentActivator",		// Namespace.Class
+		"LoadAssemblyBytes",		// Static Method
+		(void**)&PtrAssemblyLoadEnrtyPoint);	// Pointer to managed method
+
+
+	if (FAILED(hr))
+		error(error::create_delegate, "Create delegate - 0x%08x\n", hr);
+	else
+		info("Create delegate OK\n");
+
+	#ifdef WINDOWS
+	#include "resource.h"
+
+	HMODULE hModule = GetModuleHandle(NULL); // get the handle to the current module (the executable file)
+	HRSRC hResource = FindResource(hModule, MAKEINTRESOURCE(IDR_RCDATA1), RT_RCDATA); // substitute RESOURCE_ID and RESOURCE_TYPE.
+	HGLOBAL hMemory = LoadResource(hModule, hResource);
+	DWORD dwSize = SizeofResource(hModule, hResource);
+	LPVOID lpAddress = LockResource(hMemory);
+
+	char* bytes = new char[dwSize];
+	memcpy(bytes, lpAddress, dwSize);
+
+	info("Call Assembly Load... size: %d\n",dwSize);
+
+	int loadCode = PtrAssemblyLoadEnrtyPoint(bytes, dwSize, NULL, 0, NULL, NULL);
+
+	info("Assembly Load Exit Code: %d...\n",loadCode);
+
+	#endif
+
 
 	//
 	// Create a native callable function pointer for a managed method.

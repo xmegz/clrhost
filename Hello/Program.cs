@@ -1,5 +1,4 @@
 ﻿using Microsoft.Extensions.Logging;
-using System;
 using System.Reflection;
 using System.Runtime.InteropServices;
 using System.Text.Json;
@@ -12,19 +11,18 @@ namespace Hello
         {
             var str = JsonSerializer.Serialize(new Data(0, "Name"));
 
-            var factory = LoggerFactory.Create(builder =>
-            {
-                builder.AddConsole();
-            });
-            var logger = factory.CreateLogger<Data>();
+            var logger = Program._loggerFactory.CreateLogger<Data>();
 
             logger?.LogInformation("Test Start");
             logger?.LogInformation(str);
             logger?.LogInformation("Test End!");
         }
     };
+
     public class Program
     {
+        public static ILoggerFactory _loggerFactory = null;
+
         [UnmanagedCallersOnly]
         private static void NativeEntryPoint(int argc, IntPtr argv)
         {
@@ -39,24 +37,33 @@ namespace Hello
             }
 
             string[] args = MarshalArgv(argc, argv);
-            
+
             Main(args);
         }
 
         static Program()
         {
-            Console.WriteLine($"Program.Ctor {Assembly.GetExecutingAssembly().FullName}");
+            _loggerFactory = LoggerFactory.Create(builder =>
+            {
+                builder.AddConsole();
+            });
+            var logger = _loggerFactory.CreateLogger<Program>();
+
+            logger?.LogInformation($"Ctor {Assembly.GetExecutingAssembly().FullName}");
         }
 
         public static void Main(string[] arg)
         {
-            Console.WriteLine($"Program.Main! {DateTime.Now}");
+            var logger = _loggerFactory.CreateLogger<Program>();
+
+            logger?.LogInformation($"Start {DateTime.Now}");
+            
             foreach (var i in arg)
-            {
-                Console.WriteLine($"Arg: {i}");
-            }
+                logger?.LogInformation($"Arg: {i}");
 
             Data.Test();
+
+            logger?.LogInformation($"End {DateTime.Now}");
             Environment.ExitCode = 11;
         }
     }
