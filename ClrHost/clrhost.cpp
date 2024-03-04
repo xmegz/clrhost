@@ -12,97 +12,69 @@
 #include <iostream>
 #include <strstream>
 
+#include "pal.h"
+
 // Using namespace
 using namespace std;
 
-#include "clrhost.h"
-#include "pal.h"
-
-
 // Define
-#define PATH_DELIMITER ";"
 #define APPDLL_FILE_NAME "Hello.dll"
 #define DOTNET_VERSION 8
 
 // Typedef
 typedef char* (*managed_ptr)(void);
 
+// Enum
+enum error
+{
+	init = -1,
+	create_delegate = -2,
+	delegate = -3,
+	shutdown_crl = -4
+};
+
+//-----------------------------------------------------------------------------
+static inline void info(const char* format, ...)
+//-----------------------------------------------------------------------------
+{
+	printf("[INFO] ");
+
+	va_list args;
+	va_start(args, format);
+	vprintf(format, args);
+	va_end(args);
+}
+
+//-----------------------------------------------------------------------------
+static inline void error(int code, const char* format, ...)
+//-----------------------------------------------------------------------------
+{
+	printf("[ERROR] Code:%d ",code);
+
+	va_list args;
+	va_start(args, format);
+	vprintf(format, args);
+	va_end(args);
+
+	exit(code);
+}
 
 //-----------------------------------------------------------------------------
 int main(int argc, char* argv[])
 //-----------------------------------------------------------------------------
 {
 	PalPaths Paths;
+	PalPointers Pointers;
+
+	info("Initialize paths\n");
+	pal_get_paths(&Paths, DOTNET_VERSION, APPDLL_FILE_NAME);
 	
-	//
-	// Initialize paths
-	//
-	printf("[INFO] Initialize paths\n");
+	info("CoreCrl path: %s\n",Paths.CoreCrlFileFullPath.c_str());
 
-	pal_get_pal_paths(&Paths, DOTNET_VERSION, APPDLL_FILE_NAME);
-
-
-	//
-	// Load coreclr dll
-	//
-	void* hm_coreclr = pal_load_library(Paths.CoreCrlFileFullPath.c_str());
-	if (hm_coreclr == NULL)
-	{
-		printf("[ERROR] Load coreclr from %s\n", Paths.CoreCrlFileFullPath.c_str());
-		return -1;
-	}
-	else
-	{
-		printf("[INFO] Load coreclr from %s\n", Paths.CoreCrlFileFullPath.c_str());
-	}
-
-	//
-	// Set coreclr API host function pointers
-	//
-	printf("[INFO] Set coreclr API host function pointers\n");
-
-	coreclr_initialize_ptr p_coreclr_initialize = (coreclr_initialize_ptr)pal_get_export(hm_coreclr, "coreclr_initialize");
-	coreclr_create_delegate_ptr p_create_managed_delegate = (coreclr_create_delegate_ptr)pal_get_export(hm_coreclr, "coreclr_create_delegate");
-	coreclr_shutdown_ptr p_shutdown_coreclr = (coreclr_shutdown_ptr)pal_get_export(hm_coreclr, "coreclr_shutdown");
-
-
-	if (p_coreclr_initialize == NULL)
-	{
-		printf("[ERROR] coreclr_initialize not found\n");
-		return -1;
-	}
-
-	if (p_create_managed_delegate == NULL)
-	{
-		printf("[ERROR] coreclr_create_delegate not found\n");
-		return -1;
-	}
-
-	if (p_shutdown_coreclr == NULL)
-	{
-		printf("[ERROR] coreclr_shutdown not found\n");
-		return -1;
-	}
-
-	//
-	// Find and set trusted platform assemblies
-	//
-	printf("[INFO] Find and set trusted platform assemblies\n");
-
-	vector<string> files;
-	pal_get_dll_list_for_tpa(&files, Paths.RuntimeDirPath.c_str());
-	pal_get_dll_list_for_tpa(&files, Paths.AspNetDirPath.c_str());
-	string tpa_list;
-
-	for (unsigned int i = 0; i < files.size(); i++)
-	{		
-		tpa_list.append(files[i]);
-		tpa_list.append(PATH_DELIMITER);
-		//printf("%s\r\n",files[i].c_str());
-	}
-
-	printf("[INFO] Found %zd tpa assemblies\n", files.size());
-
+	info("Initialize pointers\n");
+	pal_get_pointers(&Pointers, Paths.CoreCrlFileFullPath.c_str());
+	
+	info("CoreCrl pointer: %08x\n", Pointers.PtrCoreCrl);
 
 	//
 	// Set app domain properties
@@ -114,20 +86,20 @@ int main(int argc, char* argv[])
 				"APP_PATHS"
 	};
 	const char* property_values[] = {
-		
-		Paths.AppDirPath.c_str(),// APPBASE		
-		"CLRHOST",// APP_NAME		
-		tpa_list.c_str(),// TRUSTED_PLATFORM_ASSEMBLIES		
-		Paths.AppDirPath.c_str()// APP_PATHS
+
+		Paths.AppDirPath.c_str(),	// APPBASE		
+		"CLRHOST",					// APP_NAME		
+		Paths.TpaList.c_str(),		// TRUSTED_PLATFORM_ASSEMBLIES		
+		Paths.AppDirPath.c_str()	// APP_PATHS
 	};
 
 	//
-	//Initialize the CoreCLR. Creates and starts CoreCLR hostand creates an app domain
+	// Initialize the CoreCLR. Creates and starts CoreCLR hostand creates an app domain
 	//
 	void* host_handle;
 	unsigned int domain_id;
 
-	int hr = p_coreclr_initialize(
+	int hr = Pointers.PtrInitialize(
 		Paths.AppDirPath.c_str(),        // App base path
 		"DefaultDomain",       // AppDomain friendly name
 		sizeof(property_keys) / sizeof(char*),   // Property count
@@ -137,71 +109,54 @@ int main(int argc, char* argv[])
 		&domain_id);         // AppDomain ID
 
 
-	if (FAILED(hr))
-	{
-		printf("[ERROR] Initialize - 0x%08x\n", hr);
-		return -1;
-	}
-	else
-	{
-		printf("[INFO] Initialize\n");
-	}
+	if (FAILED(hr))	
+		error(error::init, "Initialize - 0x%08x\n", hr);			
+	else	
+		info("Initialize OK\n");
+	
 
 	//
 	// Create a native callable function pointer for a managed method.
 	//
-	managed_ptr p_managed;
+	managed_ptr p_managed = NULL;
 
-	hr = p_create_managed_delegate(
-		host_handle, // Host handle
-		domain_id,  // AppDomain ID
-		"Hello", // Assembly Name 
-		"Hello.Program", // Namespace.Class
-		"Main", // Static Method
-		(void**)&p_managed); // Pointer to managed method
+	hr = Pointers.PtrCreateDelegate(
+		host_handle,			// Host handle
+		domain_id,				// AppDomain ID
+		"Hello",				// Assembly Name 
+		"Hello.Program",		// Namespace.Class
+		"Main",					// Static Method
+		(void**)&p_managed);	// Pointer to managed method
 
 
-	if (FAILED(hr))
-	{
-		printf("[ERROR] Create delegate - 0x%08x\n", hr);		
-		return -1;
-	}
-	else
-	{
-		printf("[INFO] Create delegate\n");
-	}
+	if (FAILED(hr))	
+		error(error::create_delegate, "Create delegate - 0x%08x\n", hr);		
+	else	
+		info("Create delegate OK\n");
+	
 
 	//
 	// Call managed method
 	//
-	if (p_managed == NULL)
-	{
-		printf("[ERROR] Delegate invalid\n");
-		return -1;
-	}
-	else
-	{
-		printf("[INFO] Delegate valid\n");
-	}
+	if (p_managed == NULL)	
+		error(error::delegate, "Delegate invalid\n");			
+	else	
+		info("Delegate OK\n");	
 
-	printf("[INFO] Call delegate...\n");
+	info("Call delegate...\n");
 
-	
 	p_managed();
+
+	int exitCode;
 
 	//
 	// Shutdown CoreCLR. It unloads the app domain and stops the CoreCLR host.
 	//
-	hr = p_shutdown_coreclr(host_handle, domain_id);
-	if (FAILED(hr))
-	{
-		printf("[ERROR] Shutdown failed - 0x%08x\n", hr);
-	}
-	else
-	{
-		printf("[INFO] Shutdown\n");
-		return -1;
-	}
+	hr = Pointers.PtrShutdown(host_handle, domain_id, &exitCode);
+	if (FAILED(hr))	
+		error(error::shutdown_crl, "Shutdown failed - 0x%08x\n", hr);	
+	else	
+		info("Shutdown exitCode:%d\n", exitCode);
 
-	return 0;
+	return exitCode;
 }

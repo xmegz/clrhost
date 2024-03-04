@@ -1,49 +1,56 @@
-// Using namespace
-using namespace std;
-
-#include "pal.h"
 /********************************************************************************************
  * Function used to load and activate .NET Core
  ********************************************************************************************/
+//
+// Include
+//
+#include "pal.h"
+
+// Using namespace
+using namespace std;
+
+ //
+ // Internal functions
+ //
 
 #ifdef WINDOWS
 
 #include <windows.h>
 
 #if defined(_WIN32) && defined(_M_IX86)
-	#define RUNTIME_DIR_BASE_PATH "c:\\Program Files (x86)\\dotnet\\shared\\Microsoft.NETCore.App\\"
-	#define ASPNET_BASE_PATH "c:\\Program Files (x86)\\dotnet\\shared\\Microsoft.AspNetCore.App\\"
+#define RUNTIME_DIR_BASE_PATH "c:\\Program Files (x86)\\dotnet\\shared\\Microsoft.NETCore.App\\"
+#define ASPNET_DIR_BASE_PATH "c:\\Program Files (x86)\\dotnet\\shared\\Microsoft.AspNetCore.App\\"
 #else
-	#define RUNTIME_DIR_BASE_PATH "c:\\Program Files\\dotnet\\shared\\Microsoft.NETCore.App\\"
-	#define ASPNET_DIR_BASE_PATH "c:\\Program Files\\dotnet\\shared\\Microsoft.AspNetCore.App\\"
+#define RUNTIME_DIR_BASE_PATH "c:\\Program Files\\dotnet\\shared\\Microsoft.NETCore.App\\"
+#define ASPNET_DIR_BASE_PATH "c:\\Program Files\\dotnet\\shared\\Microsoft.AspNetCore.App\\"
 #endif
 
 #define CORECLR_FILE_NAME "coreclr.dll"
 #define DIR_SEPARATOR "\\"
 
-//-----------------------------------------------------------------------------------------
-void* pal_load_library(const char* path)
+//----------------------------------------------------------------------------------------
+static inline void* pal_load_library(const char* path)
 //-----------------------------------------------------------------------------------------
 {
 	HMODULE hm = ::LoadLibraryA(path);
-	
+
 	assert(hm != nullptr);
-	
+
 	return (void*)hm;
 }
 //-----------------------------------------------------------------------------------------
-void* pal_get_export(void* h, const char* name)
+static inline void* pal_get_export(void* h, const char* name)
 //-----------------------------------------------------------------------------------------
 {
-	void* f = ::GetProcAddress((HMODULE)h, name);
-	
+	void* f = (void*)::GetProcAddress((HMODULE)h, name);
+
 	assert(f != nullptr);
-	
+
 	return f;
 }
 
 //-----------------------------------------------------------------------------------------
-string pal_get_app_dir_path(void)
+static inline string pal_get_app_dir_path(void)
 //-----------------------------------------------------------------------------------------
 {
 	HRESULT hr = S_OK;
@@ -59,28 +66,7 @@ string pal_get_app_dir_path(void)
 }
 
 //-----------------------------------------------------------------------------------------
-string pal_get_runtime_dir_base_path(void)
-//-----------------------------------------------------------------------------------------
-{
-	return string(RUNTIME_DIR_BASE_PATH);
-}
-
-//-----------------------------------------------------------------------------------------
-string pal_get_aspnet_dir_base_path(void)
-//-----------------------------------------------------------------------------------------
-{
-	return string(ASPNET_DIR_BASE_PATH);
-}
-
-//-----------------------------------------------------------------------------------------
-string pal_get_corecrl_file_name(void)
-//-----------------------------------------------------------------------------------------
-{
-	return string(CORECLR_FILE_NAME);
-}
-
-//-----------------------------------------------------------------------------------------
-void pal_get_dll_list_for_tpa(vector<string>* result, string dirname)
+static inline void pal_get_tpa_list(vector<string>* result, string dirname)
 //-----------------------------------------------------------------------------------------
 {
 	string search_pattern = dirname;
@@ -109,34 +95,33 @@ void pal_get_dll_list_for_tpa(vector<string>* result, string dirname)
 }
 
 //-----------------------------------------------------------------------------------------
-string pal_get_max_runtime_version(string base_dir, int version)
+static inline string pal_get_max_runtime_version(string base_dir, int major_runtime_version)
 //-----------------------------------------------------------------------------------------
 {
 	vector<string> result;
 
 	string search_pattern = base_dir;
-	
-	search_pattern.append(std::to_string(version));
-	search_pattern.append(".");
-	search_pattern.append("*");
+
+	search_pattern.append(std::to_string(major_runtime_version));
+	search_pattern.append(".*");	
 
 	WIN32_FIND_DATAA ffd;
 	HANDLE h = ::FindFirstFileA(search_pattern.c_str(), &ffd);
 
 	assert(h != nullptr);
 
-	string first;	
+	string first;
 	first.append(string(ffd.cFileName));
 	result.push_back(first);
 
 	while (FindNextFileA(h, &ffd))
 	{
-		string item;		
+		string item;
 		item.append(string(ffd.cFileName));
 		result.push_back(item);
 	}
 
-	return result.front();
+	return result.back();
 }
 
 
@@ -148,20 +133,20 @@ string pal_get_max_runtime_version(string base_dir, int version)
 #define CORECLR_FILE_NAME "coreclr.so"
 
 
-void* pal_load_library(const char_t* path)
+static inline void* pal_load_library(const char* paths)
 {
 	void* h = dlopen(pa, RTLD_LAZY | RTLD_LOCAL);
 	assert(h != nullptr);
 	return h;
 }
-void* pal_get_export(void* h, const char* name)
+static inline void* pal_get_export(void* h, const char* name)
 {
 	void* f = dlsym(h, name);
 	assert(f != nullptr);
 	return f;
 }
 
-string pal_get_app_dir_path()
+static inline string pal_get_app_dir_path()
 {
 	string ret = string();
 
@@ -170,10 +155,10 @@ string pal_get_app_dir_path()
 
 	if (count != -1)
 	{
-		const char* path;
-		path = dirname(result);
+		const char* paths;
+		paths = dirname(result);
 
-		ret.append(path);
+		ret.append(paths);
 		ret.append("/");
 	}
 
@@ -181,39 +166,85 @@ string pal_get_app_dir_path()
 }
 #endif
 
+//
+// Public functions
+//
 
 /*
- struct StartupPaths
+struct PalPaths
 {
 	string AppDirPath;
 	string AppFileName;
 	string AppFileFullPath;
+	string MaxRuntimeVersion;
 	string RuntimeDirPath;
 	string AspNetDirPath;
 	string CoreCrlFileFullPath;
 	string CoreCrlFileName;
+	vector<string> TpaFiles;
+	string TpaList;
 };
 */
 
-void pal_get_pal_paths(PalPaths* path, int dotnet_version, const char * fileName)
+//-----------------------------------------------------------------------------------------
+void pal_get_paths(PalPaths* paths, int major_runtime_version, const char* app_file_name)
+//-----------------------------------------------------------------------------------------
 {
-	path->AppDirPath = pal_get_app_dir_path();
-	path->AppFileName = string(fileName);
-	
-	path->AppFileFullPath = pal_get_app_dir_path();	
-	path->AppFileFullPath.append(string(fileName));
-	
-	path->MaxRuntimeVersion = pal_get_max_runtime_version(pal_get_runtime_dir_base_path(), dotnet_version);
+	paths->AppDirPath = pal_get_app_dir_path();
+	paths->AppFileName = string(app_file_name);
 
-	path->RuntimeDirPath = pal_get_runtime_dir_base_path();	
-	path->RuntimeDirPath.append(path->MaxRuntimeVersion);
+	paths->AppFileFullPath = paths->AppDirPath;
+	paths->AppFileFullPath.append(paths->AppFileName);
 
-	path->AspNetDirPath = pal_get_aspnet_dir_base_path();	
-	path->AspNetDirPath.append(path->MaxRuntimeVersion);
+	paths->MaxRuntimeVersion = pal_get_max_runtime_version(string(RUNTIME_DIR_BASE_PATH), major_runtime_version);
 
-	path->CoreCrlFileName = string(CORECLR_FILE_NAME);
-	path->CoreCrlFileFullPath = path->RuntimeDirPath;
-	path->CoreCrlFileFullPath.append(DIR_SEPARATOR);
-	path->CoreCrlFileFullPath.append(CORECLR_FILE_NAME);
+	paths->RuntimeDirPath = string(RUNTIME_DIR_BASE_PATH);
+	paths->RuntimeDirPath.append(paths->MaxRuntimeVersion);
+
+	paths->AspNetDirPath = string(ASPNET_DIR_BASE_PATH);
+	paths->AspNetDirPath.append(paths->MaxRuntimeVersion);
+
+	paths->CoreCrlFileName = string(CORECLR_FILE_NAME);
+	paths->CoreCrlFileFullPath = paths->RuntimeDirPath;
+	paths->CoreCrlFileFullPath.append(DIR_SEPARATOR);
+	paths->CoreCrlFileFullPath.append(CORECLR_FILE_NAME);
+
+	paths->TpaFiles.clear();
+	pal_get_tpa_list(&paths->TpaFiles, paths->RuntimeDirPath.c_str());
+	pal_get_tpa_list(&paths->TpaFiles, paths->AspNetDirPath.c_str());
+
+	for (unsigned int i = 0; i < paths->TpaFiles.size(); i++)
+	{
+		paths->TpaList.append(paths->TpaFiles[i]);
+		paths->TpaList.append(";");
+	}
 }
 
+/*
+struct PalPointers
+{
+	void* PtrCoreCrl;
+	coreclr_initialize_ptr PtrInitialize;
+	coreclr_create_delegate_ptr PtrCreateDelegate;
+	coreclr_shutdown_2_ptr PtrShutdown;
+};
+*/
+
+//-----------------------------------------------------------------------------------------
+void pal_get_pointers(PalPointers* pointers, const char* corecrl_file_name)
+//-----------------------------------------------------------------------------------------
+{
+	// Load coreclr.dll	
+	pointers->PtrCoreCrl = pal_load_library(corecrl_file_name);
+	assert(pointers->PtrCoreCrl != nullptr);
+
+	// Set coreclr API host function pointers
+	pointers->PtrInitialize = (coreclr_initialize_ptr)pal_get_export(pointers->PtrCoreCrl, "coreclr_initialize");
+	assert(pointers->PtrInitialize != nullptr);
+
+	pointers->PtrCreateDelegate = (coreclr_create_delegate_ptr)pal_get_export(pointers->PtrCoreCrl, "coreclr_create_delegate");
+	assert(pointers->PtrCreateDelegate != nullptr);
+
+	pointers->PtrShutdown = (coreclr_shutdown_2_ptr)pal_get_export(pointers->PtrCoreCrl, "coreclr_shutdown_2");
+	assert(pointers->PtrShutdown != nullptr);
+}

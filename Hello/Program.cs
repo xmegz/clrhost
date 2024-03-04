@@ -34,6 +34,7 @@ namespace Hello
             Console.WriteLine("Main Start!");
             Data.Test();
             Console.WriteLine("Main End!");
+            Environment.ExitCode = 11;
         }
     }
 }

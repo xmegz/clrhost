@@ -15,7 +15,7 @@
     </Filter>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="clrhost.h">
+    <ClInclude Include="coreclrhost.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="pal.h">
