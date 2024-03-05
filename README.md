@@ -1,7 +1,9 @@
 # .Net Core Runtime Host Start
 - Simple conception howto start .Net Core Runtime from native code
 - C++ part and C# part debugging is also possible.
-- Just for .Net Core 8.0.2 version
+
+- Simple conception for windows to inject dotnet assembly to native exe as resource
+- Just for dotnet 8
 
 ## Main repository
 https://github.com/dotnet/runtime
@@ -21,8 +23,11 @@ https://github.com/dotnet/runtime/blob/main/src/native/corehost/hostfxr.h
 ## Sample Host Example Project
 https://github.com/dotnet/samples/blob/main/core/hosting/src/NativeHost/nativehost.cpp
 
+## AssemblyLoadBytes trace
+
 https://github.com/dotnet/runtime/blob/main/src/libraries/System.Private.CoreLib/src/Internal/Runtime/InteropServices/ComponentActivator.cs
-```
+
+```dotnet
     public static unsafe int LoadAssemblyBytes(byte* assembly, nint assemblyByteLength, byte* symbols, nint symbolsByteLength, IntPtr loadContext, IntPtr reserved)
         {
             if (!IsSupported)
@@ -59,8 +64,9 @@ https://github.com/dotnet/runtime/blob/main/src/libraries/System.Private.CoreLib
 ```
 
 
-runtime\src\native\corehost\hostpolicy\hostpolicy.cpp
-```
+https://github.com/dotnet/runtime/blob/main/src/native/corehost/hostpolicy/hostpolicy.cpp
+
+```cpp
   case coreclr_delegate_type::load_assembly_bytes:
             return coreclr->create_delegate(
                 "System.Private.CoreLib",
@@ -69,8 +75,9 @@ runtime\src\native\corehost\hostpolicy\hostpolicy.cpp
                 delegate);
 ```
 
-C:\Projects\Microsoft\Source\runtime\src\native\corehost\hostpolicy\coreclr.cpp
-```
+https://github.com/dotnet/runtime/blob/main/src/native/corehost/hostpolicy/coreclr.cpp
+
+```cpp
 pal::hresult_t coreclr_t::create_delegate(
     const char* entryPointAssemblyName,
     const char* entryPointTypeName,
@@ -89,9 +96,13 @@ pal::hresult_t coreclr_t::create_delegate(
 }
 ```
 
+## Corecrl dll exports interface
 
+```dos
 dumpbin /exports coreclr.dll
 ```
+
+```console
 Microsoft (R) COFF/PE Dumper Version 14.39.33520.0
 Copyright (C) Microsoft Corporation.  All rights reserved.
 
@@ -123,28 +134,31 @@ File Type: DLL
           2    9 00488740 g_CLREngineMetrics
          12    A 004051C0 g_dacTable
 ```
-Native entry point
+
+## Native entry point construct
+
 https://github.com/smx-smx/EzDotnet
-```
+
+```csharp
 namespace ManagedSample
 {
-	public class EntryPoint {
-		private static string[] ReadArgv(IntPtr args, int sizeBytes) {
-			int nargs = sizeBytes / IntPtr.Size;
-			string[] argv = new string[nargs];
-			
-			for(int i=0; i<nargs; i++, args += IntPtr.Size) {
-				IntPtr charPtr = Marshal.ReadIntPtr(args);
-				argv[i] = Marshal.PtrToStringAnsi(charPtr);
-			}
-			return argv;
-		}
-		
-		private static int Entry(IntPtr args, int sizeBytes) {
-			string[] argv = ReadArgv(args, sizeBytes);
-			Main(argv);
-			return 0;
-		}
+	public class Program {
+	  private static void NativeEntryPoint(int argc, IntPtr argv)
+        {
+            static string[] MarshalArgv(int argc, IntPtr argv)
+            {
+                string[] args = new string[argc];
+
+                for (int i = 0; i < argc; i++, argv += IntPtr.Size)
+                    args[i] = Marshal.PtrToStringAnsi(Marshal.ReadIntPtr(argv));
+
+                return args;
+            }
+
+            string[] args = MarshalArgv(argc, argv);
+
+            Main(args);
+        }
 
 		public static void Main(string[] args){
 			Console.WriteLine("Hello, World");
@@ -153,11 +167,31 @@ namespace ManagedSample
 }
 ```
 
-Boundle marker.
-c:\Projects\Microsoft\Source\runtime\src\native\corehost\apphost\
+## Hosting links
 
 Host Runtime information
 https://github.com/dotnet/runtime/blob/main/docs/design/features/host-runtime-information.md
 
 Host Traceing
 https://github.com/dotnet/runtime/blob/main/docs/design/features/host-tracing.md
+
+Hosting Layer Apis (hostpolicy, hostfxr, coreclr)
+https://github.com/dotnet/runtime/blob/main/docs/design/features/hosting-layer-apis.md
+
+## Bundle makeing
+
+Single File App
+https://learn.microsoft.com/en-us/dotnet/core/deploying/single-file/overview?tabs=cli
+
+Single File App Host Design
+https://github.com/dotnet/designs/blob/main/accepted/2020/single-file/design.md
+
+Single File Extract
+https://github.com/dotnet/designs/blob/main/accepted/2020/single-file/extract.md
+
+Bundler
+https://github.com/dotnet/designs/blob/main/accepted/2020/single-file/bundler.md
+
+Boundle marker.
+c:\Projects\Microsoft\Source\runtime\src\native\corehost\apphost\
+
