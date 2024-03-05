@@ -152,3 +152,12 @@ namespace ManagedSample
 	}
 }
 ```
+
+Boundle marker.
+c:\Projects\Microsoft\Source\runtime\src\native\corehost\apphost\
+
+Host Runtime information
+https://github.com/dotnet/runtime/blob/main/docs/design/features/host-runtime-information.md
+
+Host Traceing
+https://github.com/dotnet/runtime/blob/main/docs/design/features/host-tracing.md

@@ -306,4 +306,7 @@ void pal_get_pointers(PalPointers* pointers, const char* corecrl_file_name)
 
 	pointers->PtrShutdown = (coreclr_shutdown_2_ptr)pal_get_export(pointers->PtrCoreCrl, "coreclr_shutdown_2");
 	assert(pointers->PtrShutdown != nullptr);
+
+	pointers->PtrErrorWriter = (coreclr_set_error_writer_ptr)pal_get_export(pointers->PtrCoreCrl, "coreclr_set_error_writer");
+	assert(pointers->PtrErrorWriter != nullptr);
 }

@@ -56,7 +56,7 @@ namespace Hello
         {
             var logger = _loggerFactory.CreateLogger<Program>();
 
-            logger?.LogInformation($"Start {DateTime.Now}");
+            logger?.LogInformation($"Start Modified{DateTime.Now}");
             
             foreach (var i in arg)
                 logger?.LogInformation($"Arg: {i}");

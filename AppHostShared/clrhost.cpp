@@ -82,6 +82,13 @@ static inline void error(int code, const char* format, ...)
 }
 
 //-----------------------------------------------------------------------------
+static void trace(const char* message)
+//-----------------------------------------------------------------------------
+{
+	printf("[TRACE] %s",message);	
+}
+
+//-----------------------------------------------------------------------------
 int main(int argc, const char* argv[])
 //-----------------------------------------------------------------------------
 {
@@ -95,6 +102,11 @@ int main(int argc, const char* argv[])
 
 	info("Initialize pointers\n");
 	pal_get_pointers(&Pointers, Paths.CoreCrlFileFullPath.c_str());
+
+	info("Register error writer\n");
+	int h2 = Pointers.PtrErrorWriter(trace);
+	
+	info("Register error writer - 0x%08x\n", h2);
 	
 	info("CoreCrl pointer: %08x\n", Pointers.PtrCoreCrl);
 
@@ -156,10 +168,10 @@ int main(int argc, const char* argv[])
 		info("Create delegate OK\n");
 
 	#ifdef WINDOWS
-	#include "resource.h"
+	//#include "resource.h"
 
 	HMODULE hModule = GetModuleHandle(NULL); // get the handle to the current module (the executable file)
-	HRSRC hResource = FindResource(hModule, MAKEINTRESOURCE(IDR_RCDATA1), RT_RCDATA); // substitute RESOURCE_ID and RESOURCE_TYPE.
+	HRSRC hResource = FindResourceA(hModule, "IDR_RCDATA1", MAKEINTRESOURCEA(10)); // substitute RESOURCE_ID and RESOURCE_TYPE.
 	HGLOBAL hMemory = LoadResource(hModule, hResource);
 	DWORD dwSize = SizeofResource(hModule, hResource);
 	LPVOID lpAddress = LockResource(hMemory);

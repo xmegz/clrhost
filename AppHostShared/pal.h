@@ -35,6 +35,7 @@ struct PalPointers
 	coreclr_initialize_ptr PtrInitialize;	
 	coreclr_create_delegate_ptr PtrCreateDelegate;
 	coreclr_shutdown_2_ptr PtrShutdown;
+	coreclr_set_error_writer_ptr PtrErrorWriter;
 };
 
 
