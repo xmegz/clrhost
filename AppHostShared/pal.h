@@ -38,11 +38,18 @@ struct PalPointers
 	coreclr_set_error_writer_ptr PtrErrorWriter;
 };
 
+struct PalAssembly
+{
+	char* Bytes;
+	int Size;
+};
+
 
 //
 // Public functions
 //
 void pal_get_paths(PalPaths* path, int dotnet_version, const char* app_file_name);
 void pal_get_pointers(PalPointers* pointers, const char* corecrl_file_name);
+void pal_load_assembly(PalAssembly* assembly);
 
 #endif

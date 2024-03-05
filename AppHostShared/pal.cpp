@@ -28,6 +28,7 @@ using namespace std;
 #define CORECLR_FILE_NAME "coreclr.dll"
 #define DIR_SEPARATOR "\\"
 #define TPA_LIST_SEPARATOR ";"
+#define ASM_ID "IDR_RCDATA1"
 
 //----------------------------------------------------------------------------------------
 static inline void* pal_load_library(const char* path)
@@ -125,6 +126,32 @@ static inline string pal_get_max_runtime_version(string base_dir, int major_runt
 	return result.back();
 }
 
+//-----------------------------------------------------------------------------
+static inline char* pal_load_resource(const char* identifier, int* size)
+//-----------------------------------------------------------------------------
+{
+	HMODULE hModule = GetModuleHandle(NULL); // get the handle to the current module (the executable file)
+	assert(hModule != nullptr);
+
+	HRSRC hResource = FindResourceA(hModule, identifier, MAKEINTRESOURCEA(10)); // substitute RESOURCE_ID and RESOURCE_TYPE.	
+	assert(hResource != nullptr);
+
+	HGLOBAL hMemory = LoadResource(hModule, hResource);
+	assert(hMemory != nullptr);
+
+	DWORD dwSize = SizeofResource(hModule, hResource);
+	assert(dwSize != 0);
+
+	LPVOID lpAddress = LockResource(hMemory);
+	assert(lpAddress != nullptr);
+
+	char* bytes = (char*)malloc(dwSize);
+
+	memcpy(bytes, lpAddress, dwSize);
+
+	*size = dwSize;
+	return bytes;
+}
 
 #else
 
@@ -140,21 +167,29 @@ static inline string pal_get_max_runtime_version(string base_dir, int major_runt
 #define CORECLR_FILE_NAME "libcoreclr.so"
 #define DIR_SEPARATOR "/"
 #define TPA_LIST_SEPARATOR ":"
+#define ASM_ID "IDR_RCDATA1"
 
+//-----------------------------------------------------------------------------------------
 static inline void* pal_load_library(const char* path)
+//-----------------------------------------------------------------------------------------
 {
 	void* h = dlopen(path, RTLD_LAZY | RTLD_LOCAL);
 	assert(h != nullptr);
 	return h;
 }
+
+//-----------------------------------------------------------------------------------------
 static inline void* pal_get_export(void* h, const char* name)
+//-----------------------------------------------------------------------------------------
 {
 	void* f = dlsym(h, name);
 	assert(f != nullptr);
 	return f;
 }
 
+//-----------------------------------------------------------------------------------------
 static inline string pal_get_app_dir_path()
+//-----------------------------------------------------------------------------------------
 {
 	string ret = string();
 
@@ -173,7 +208,9 @@ static inline string pal_get_app_dir_path()
 	return ret;
 }
 
+//-----------------------------------------------------------------------------------------
 static inline string pal_get_max_runtime_version(string base_dir, int major_runtime_version)
+//-----------------------------------------------------------------------------------------
 {
 	vector<string> result;
 
@@ -220,6 +257,13 @@ static inline void pal_get_tpa_list(vector<string>* result, string dirname)
 			result->push_back(file);
 		}
 	}
+}
+
+//-----------------------------------------------------------------------------
+static inline char* pal_load_resource(const char* identifier, int* size)
+//-----------------------------------------------------------------------------
+{
+	assert(false);
 }
 
 
@@ -286,6 +330,7 @@ struct PalPointers
 	coreclr_initialize_ptr PtrInitialize;
 	coreclr_create_delegate_ptr PtrCreateDelegate;
 	coreclr_shutdown_2_ptr PtrShutdown;
+	coreclr_set_error_writer_ptr PtrErrorWriter;
 };
 */
 
@@ -309,4 +354,19 @@ void pal_get_pointers(PalPointers* pointers, const char* corecrl_file_name)
 
 	pointers->PtrErrorWriter = (coreclr_set_error_writer_ptr)pal_get_export(pointers->PtrCoreCrl, "coreclr_set_error_writer");
 	assert(pointers->PtrErrorWriter != nullptr);
+}
+
+/*
+struct PalAssembly
+{
+	char* Bytes;
+	int Size;
+};
+*/
+
+//-----------------------------------------------------------------------------------------
+void pal_load_assembly(PalAssembly* assembly)
+//-----------------------------------------------------------------------------------------
+{
+	assembly->Bytes = pal_load_resource(ASM_ID, &assembly->Size);
 }

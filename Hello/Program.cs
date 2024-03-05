@@ -9,24 +9,20 @@ namespace Hello
     {
         public static void Test()
         {
-            var str = JsonSerializer.Serialize(new Data(0, "Name"));
+            var logger = Program.LoggerFactory.CreateLogger<Data>();
 
-            var logger = Program._loggerFactory.CreateLogger<Data>();
-
-            logger?.LogInformation("Test Start");
-            logger?.LogInformation(str);
-            logger?.LogInformation("Test End!");
+            logger?.LogInformation($"Test Data {JsonSerializer.Serialize(new Data(0, "Name"))}");
         }
     };
 
     public class Program
     {
-        public static ILoggerFactory _loggerFactory = null;
+        public static ILoggerFactory LoggerFactory { get; set; } = null;
 
         [UnmanagedCallersOnly]
         private static void NativeEntryPoint(int argc, IntPtr argv)
         {
-            string[] MarshalArgv(int argc, IntPtr argv)
+            static string[] MarshalArgv(int argc, IntPtr argv)
             {
                 string[] args = new string[argc];
 
@@ -40,24 +36,24 @@ namespace Hello
 
             Main(args);
         }
-
         static Program()
         {
-            _loggerFactory = LoggerFactory.Create(builder =>
+            LoggerFactory = Microsoft.Extensions.Logging.LoggerFactory.Create(builder =>
             {
                 builder.AddConsole();
             });
-            var logger = _loggerFactory.CreateLogger<Program>();
+
+            var logger = LoggerFactory.CreateLogger<Program>();
 
             logger?.LogInformation($"Ctor {Assembly.GetExecutingAssembly().FullName}");
         }
 
         public static void Main(string[] arg)
         {
-            var logger = _loggerFactory.CreateLogger<Program>();
+            var logger = LoggerFactory.CreateLogger<Program>();
 
-            logger?.LogInformation($"Start Modified{DateTime.Now}");
-            
+            logger?.LogInformation($"Start {DateTime.Now}");
+
             foreach (var i in arg)
                 logger?.LogInformation($"Arg: {i}");
 

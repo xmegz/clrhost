@@ -63,7 +63,7 @@ static inline void info(const char* format, ...)
 
 	va_list args;
 	va_start(args, format);
-	vfprintf(stdout,format, args);
+	vfprintf(stdout, format, args);
 	va_end(args);
 }
 
@@ -71,11 +71,11 @@ static inline void info(const char* format, ...)
 static inline void error(int code, const char* format, ...)
 //-----------------------------------------------------------------------------
 {
-	printf("[ERROR] Code:%d ",code);
+	printf("[ERROR] Code:%d ", code);
 
 	va_list args;
 	va_start(args, format);
-	vfprintf(stderr,format, args);
+	vfprintf(stderr, format, args);
 	va_end(args);
 
 	exit(code);
@@ -85,7 +85,7 @@ static inline void error(int code, const char* format, ...)
 static void trace(const char* message)
 //-----------------------------------------------------------------------------
 {
-	printf("[TRACE] %s",message);	
+	printf("[TRACE] %s", message);
 }
 
 //-----------------------------------------------------------------------------
@@ -94,21 +94,21 @@ int main(int argc, const char* argv[])
 {
 	PalPaths Paths;
 	PalPointers Pointers;
+	PalAssembly Assembly;
 
 	info("Initialize paths\n");
 	pal_get_paths(&Paths, DOTNET_VERSION, APPDLL_FILE_NAME);
-	
-	info("CoreCrl path: %s\n",Paths.CoreCrlFileFullPath.c_str());
+
+	info("CoreCrl path: %s\n", Paths.CoreCrlFileFullPath.c_str());
 
 	info("Initialize pointers\n");
 	pal_get_pointers(&Pointers, Paths.CoreCrlFileFullPath.c_str());
 
-	info("Register error writer\n");
-	int h2 = Pointers.PtrErrorWriter(trace);
-	
-	info("Register error writer - 0x%08x\n", h2);
-	
 	info("CoreCrl pointer: %08x\n", Pointers.PtrCoreCrl);
+
+	info("Register error writer\n");
+	Pointers.PtrErrorWriter(trace);
+
 
 	//
 	// Set app domain properties
@@ -143,11 +143,11 @@ int main(int argc, const char* argv[])
 		&domain_id);         // AppDomain ID
 
 
-	if (FAILED(hr))	
-		error(error::init, "Initialize - 0x%08x\n", hr);			
-	else	
+	if (FAILED(hr))
+		error(error::init, "Initialize - 0x%08x\n", hr);
+	else
 		info("Initialize OK\n");
-	
+
 	//
 	// Create a native callable function pointer for a managed method.
 	//
@@ -167,25 +167,17 @@ int main(int argc, const char* argv[])
 	else
 		info("Create delegate OK\n");
 
-	#ifdef WINDOWS
-	//#include "resource.h"
+#ifdef WINDOWS	
 
-	HMODULE hModule = GetModuleHandle(NULL); // get the handle to the current module (the executable file)
-	HRSRC hResource = FindResourceA(hModule, "IDR_RCDATA1", MAKEINTRESOURCEA(10)); // substitute RESOURCE_ID and RESOURCE_TYPE.
-	HGLOBAL hMemory = LoadResource(hModule, hResource);
-	DWORD dwSize = SizeofResource(hModule, hResource);
-	LPVOID lpAddress = LockResource(hMemory);
+	pal_load_assembly(&Assembly);
 
-	char* bytes = new char[dwSize];
-	memcpy(bytes, lpAddress, dwSize);
+	info("Call assembly load.size: %ld\n", Assembly.Size);
 
-	info("Call Assembly Load... size: %d\n",dwSize);
+	int loadCode = PtrAssemblyLoadEnrtyPoint(Assembly.Bytes, Assembly.Size, NULL, 0, NULL, NULL);
 
-	int loadCode = PtrAssemblyLoadEnrtyPoint(bytes, dwSize, NULL, 0, NULL, NULL);
+	info("Assembly load  ret code: %08x\n", loadCode);
 
-	info("Assembly Load Exit Code: %d...\n",loadCode);
-
-	#endif
+#endif
 
 
 	//
@@ -202,23 +194,23 @@ int main(int argc, const char* argv[])
 		(void**)&PtrNativeEntryPoint);	// Pointer to managed method
 
 
-	if (FAILED(hr))	
-		error(error::create_delegate, "Create delegate - 0x%08x\n", hr);		
-	else	
+	if (FAILED(hr))
+		error(error::create_delegate, "Create delegate - 0x%08x\n", hr);
+	else
 		info("Create delegate OK\n");
-	
+
 
 	//
 	// Call managed method
 	//
 	if (PtrNativeEntryPoint == NULL)
-		error(error::delegate, "Delegate invalid\n");			
-	else	
-		info("Delegate OK\n");	
+		error(error::delegate, "Delegate invalid\n");
+	else
+		info("Delegate OK\n");
 
 	info("Call delegate...\n");
 
-	PtrNativeEntryPoint(argc,argv);
+	PtrNativeEntryPoint(argc, argv);
 
 	int exitCode;
 
@@ -226,9 +218,9 @@ int main(int argc, const char* argv[])
 	// Shutdown CoreCLR. It unloads the app domain and stops the CoreCLR host.
 	//
 	hr = Pointers.PtrShutdown(host_handle, domain_id, &exitCode);
-	if (FAILED(hr))	
-		error(error::shutdown_crl, "Shutdown failed - 0x%08x\n", hr);	
-	else	
+	if (FAILED(hr))
+		error(error::shutdown_crl, "Shutdown failed - 0x%08x\n", hr);
+	else
 		info("Shutdown exitCode:%d\n", exitCode);
 
 	return exitCode;
