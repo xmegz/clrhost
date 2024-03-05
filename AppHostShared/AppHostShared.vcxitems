@@ -14,7 +14,7 @@
     <ProjectCapability Include="SourceItemsFromImports" />
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="$(MSBuildThisFileDirectory)clrhost.cpp" />
+    <ClCompile Include="$(MSBuildThisFileDirectory)main.cpp" />
     <ClCompile Include="$(MSBuildThisFileDirectory)pal.cpp" />
   </ItemGroup>
   <ItemGroup>

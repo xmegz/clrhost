@@ -1,12 +1,15 @@
 /********************************************************************************************
  * Function used to load and activate .NET Core
  ********************************************************************************************/
- //
- // Include
- //
+
+//
+// Include
+//
 #include "pal.h"
 
+//
 // Using namespace
+//
 using namespace std;
 
 //
@@ -30,9 +33,9 @@ using namespace std;
 #define TPA_LIST_SEPARATOR ";"
 #define ASM_ID "IDR_RCDATA1"
 
-//----------------------------------------------------------------------------------------
+//-----------------------------------------------------------------------------
 static inline void* pal_load_library(const char* path)
-//-----------------------------------------------------------------------------------------
+//-----------------------------------------------------------------------------
 {
 	HMODULE hm = ::LoadLibraryA(path);
 
@@ -40,9 +43,9 @@ static inline void* pal_load_library(const char* path)
 
 	return (void*)hm;
 }
-//-----------------------------------------------------------------------------------------
+//-----------------------------------------------------------------------------
 static inline void* pal_get_export(void* h, const char* name)
-//-----------------------------------------------------------------------------------------
+//-----------------------------------------------------------------------------
 {
 	void* f = (void*)::GetProcAddress((HMODULE)h, name);
 
@@ -51,9 +54,9 @@ static inline void* pal_get_export(void* h, const char* name)
 	return f;
 }
 
-//-----------------------------------------------------------------------------------------
+//-----------------------------------------------------------------------------
 static inline string pal_get_app_dir_path(void)
-//-----------------------------------------------------------------------------------------
+//-----------------------------------------------------------------------------
 {
 	HRESULT hr = S_OK;
 
@@ -67,9 +70,9 @@ static inline string pal_get_app_dir_path(void)
 	return string(buffer).substr(0, pos + 1);
 }
 
-//-----------------------------------------------------------------------------------------
+//-----------------------------------------------------------------------------
 static inline void pal_get_tpa_list(vector<string>* result, string dirname)
-//-----------------------------------------------------------------------------------------
+//-----------------------------------------------------------------------------
 {
 	string search_pattern = dirname;
 	search_pattern.append(DIR_SEPARATOR);
@@ -96,15 +99,15 @@ static inline void pal_get_tpa_list(vector<string>* result, string dirname)
 	}
 }
 
-//-----------------------------------------------------------------------------------------
-static inline string pal_get_max_runtime_version(string base_dir, int major_runtime_version)
-//-----------------------------------------------------------------------------------------
+//-----------------------------------------------------------------------------
+static inline string pal_get_max_rt_version(string base_dir, int major_rt_version)
+//-----------------------------------------------------------------------------
 {
 	vector<string> result;
 
 	string search_pattern = base_dir;
 
-	search_pattern.append(std::to_string(major_runtime_version));
+	search_pattern.append(std::to_string(major_rt_version));
 	search_pattern.append(".*");
 
 	WIN32_FIND_DATAA ffd;
@@ -127,7 +130,7 @@ static inline string pal_get_max_runtime_version(string base_dir, int major_runt
 }
 
 //-----------------------------------------------------------------------------
-static inline char* pal_load_resource(const char* identifier, int* size)
+static inline void pal_load_resource(const char* identifier, PalAssembly* assembly)
 //-----------------------------------------------------------------------------
 {
 	HMODULE hModule = GetModuleHandle(NULL); // get the handle to the current module (the executable file)
@@ -145,12 +148,17 @@ static inline char* pal_load_resource(const char* identifier, int* size)
 	LPVOID lpAddress = LockResource(hMemory);
 	assert(lpAddress != nullptr);
 
-	char* bytes = (char*)malloc(dwSize);
+			
+	if (dwSize)
+	{
+		assembly->Bytes = (char*)malloc(dwSize);
+		memcpy(assembly->Bytes, lpAddress, dwSize);
+		assembly->Size = dwSize;
 
-	memcpy(bytes, lpAddress, dwSize);
+	
+	}
 
-	*size = dwSize;
-	return bytes;
+	
 }
 
 #else
@@ -159,6 +167,7 @@ static inline char* pal_load_resource(const char* identifier, int* size)
 #include <unistd.h>
 #include <libgen.h>
 #include <dirent.h>
+#include <cstdarg>
 
 #define RUNTIME_DIR_BASE_PATH "/usr/share/dotnet/shared/Microsoft.NETCore.App/"
 #define ASPNET_DIR_BASE_PATH "/usr/share/dotnet/shared/Microsoft.AspNetCore.App/"
@@ -169,27 +178,27 @@ static inline char* pal_load_resource(const char* identifier, int* size)
 #define TPA_LIST_SEPARATOR ":"
 #define ASM_ID "IDR_RCDATA1"
 
-//-----------------------------------------------------------------------------------------
+//-----------------------------------------------------------------------------
 static inline void* pal_load_library(const char* path)
-//-----------------------------------------------------------------------------------------
+//-----------------------------------------------------------------------------
 {
 	void* h = dlopen(path, RTLD_LAZY | RTLD_LOCAL);
 	assert(h != nullptr);
 	return h;
 }
 
-//-----------------------------------------------------------------------------------------
+//-----------------------------------------------------------------------------
 static inline void* pal_get_export(void* h, const char* name)
-//-----------------------------------------------------------------------------------------
+//-----------------------------------------------------------------------------
 {
 	void* f = dlsym(h, name);
 	assert(f != nullptr);
 	return f;
 }
 
-//-----------------------------------------------------------------------------------------
+//-----------------------------------------------------------------------------
 static inline string pal_get_app_dir_path()
-//-----------------------------------------------------------------------------------------
+//-----------------------------------------------------------------------------
 {
 	string ret = string();
 
@@ -208,9 +217,9 @@ static inline string pal_get_app_dir_path()
 	return ret;
 }
 
-//-----------------------------------------------------------------------------------------
-static inline string pal_get_max_runtime_version(string base_dir, int major_runtime_version)
-//-----------------------------------------------------------------------------------------
+//-----------------------------------------------------------------------------
+static inline string pal_get_max_rt_version(string base_dir, int major_rt_version)
+//-----------------------------------------------------------------------------
 {
 	vector<string> result;
 
@@ -223,7 +232,7 @@ static inline string pal_get_max_runtime_version(string base_dir, int major_runt
 	{
 		string file;
 		file.append(entry->d_name);
-		if (file.rfind(std::to_string(major_runtime_version).c_str(), 0) == 0)
+		if (file.rfind(std::to_string(major_rt_version).c_str(), 0) == 0)
 		{
 			result.push_back(file);
 		}
@@ -234,9 +243,9 @@ static inline string pal_get_max_runtime_version(string base_dir, int major_runt
 	return result.back();
 }
 
-//-----------------------------------------------------------------------------------------
+//-----------------------------------------------------------------------------
 static inline void pal_get_tpa_list(vector<string>* result, string dirname)
-//-----------------------------------------------------------------------------------------
+//-----------------------------------------------------------------------------
 {
 	struct dirent* entry;
 	DIR* dir = opendir(dirname.c_str());
@@ -260,10 +269,10 @@ static inline void pal_get_tpa_list(vector<string>* result, string dirname)
 }
 
 //-----------------------------------------------------------------------------
-static inline char* pal_load_resource(const char* identifier, int* size)
+static inline void pal_load_resource(const char* identifier, PalAssembly* assembly)
 //-----------------------------------------------------------------------------
 {
-	assert(false);
+	assert(false);	
 }
 
 
@@ -273,33 +282,60 @@ static inline char* pal_load_resource(const char* identifier, int* size)
 // Public functions
 //
 
+//-----------------------------------------------------------------------------
+void pal_info(const char* format, ...)
+//-----------------------------------------------------------------------------
+{
+	fprintf(stdout,"[INFO] ");
+
+	va_list args;
+	va_start(args, format);
+	vfprintf(stdout, format, args);
+	va_end(args);
+}
+
+//-----------------------------------------------------------------------------
+void main_error(int code, const char* format, ...)
+//-----------------------------------------------------------------------------
+{
+	fprintf(stderr,"[ERROR] Code:%d ", code);
+
+	va_list args;
+	va_start(args, format);
+	vfprintf(stderr, format, args);
+	va_end(args);
+
+	exit(code);
+}
+
+//-----------------------------------------------------------------------------
+void pal_trace(const char* message)
+//-----------------------------------------------------------------------------
+{
+	fprintf(stdout,"[TRACE] %s", message);
+}
+
+
 /*
 struct PalPaths
 {
-	string AppDirPath;
-	string AppFileName;
-	string AppFileFullPath;
-	string MaxRuntimeVersion;
-	string RuntimeDirPath;
-	string AspNetDirPath;
-	string CoreCrlFileFullPath;
-	string CoreCrlFileName;
-	vector<string> TpaFiles;
-	string TpaList;
+	std::string AppDirPath;
+	std::string MaxRuntimeVersion;
+	std::string RuntimeDirPath;
+	std::string AspNetDirPath;
+	std::string CoreCrlFileFullPath;
+	std::string CoreCrlFileName;
+	std::vector<std::string> TpaFiles;
+	std::string TpaList;
 };
 */
 
-//-----------------------------------------------------------------------------------------
-void pal_get_paths(PalPaths* paths, int major_runtime_version, const char* app_file_name)
-//-----------------------------------------------------------------------------------------
+//-----------------------------------------------------------------------------
+void pal_get_paths(PalPaths* paths, int major_rt_version)
+//-----------------------------------------------------------------------------
 {
 	paths->AppDirPath = pal_get_app_dir_path();
-	paths->AppFileName = string(app_file_name);
-
-	paths->AppFileFullPath = paths->AppDirPath;
-	paths->AppFileFullPath.append(paths->AppFileName);
-
-	paths->MaxRuntimeVersion = pal_get_max_runtime_version(string(RUNTIME_DIR_BASE_PATH), major_runtime_version);
+	paths->MaxRuntimeVersion = pal_get_max_rt_version(string(RUNTIME_DIR_BASE_PATH), major_rt_version);
 
 	paths->RuntimeDirPath = string(RUNTIME_DIR_BASE_PATH);
 	paths->RuntimeDirPath.append(paths->MaxRuntimeVersion);
@@ -330,13 +366,13 @@ struct PalPointers
 	coreclr_initialize_ptr PtrInitialize;
 	coreclr_create_delegate_ptr PtrCreateDelegate;
 	coreclr_shutdown_2_ptr PtrShutdown;
-	coreclr_set_error_writer_ptr PtrErrorWriter;
+	coreclr_set_error_writer_ptr PtrSetErrorWriter;
 };
 */
 
-//-----------------------------------------------------------------------------------------
+//-----------------------------------------------------------------------------
 void pal_get_pointers(PalPointers* pointers, const char* corecrl_file_name)
-//-----------------------------------------------------------------------------------------
+//-----------------------------------------------------------------------------
 {
 	// Load coreclr.dll	
 	pointers->PtrCoreCrl = pal_load_library(corecrl_file_name);
@@ -352,8 +388,8 @@ void pal_get_pointers(PalPointers* pointers, const char* corecrl_file_name)
 	pointers->PtrShutdown = (coreclr_shutdown_2_ptr)pal_get_export(pointers->PtrCoreCrl, "coreclr_shutdown_2");
 	assert(pointers->PtrShutdown != nullptr);
 
-	pointers->PtrErrorWriter = (coreclr_set_error_writer_ptr)pal_get_export(pointers->PtrCoreCrl, "coreclr_set_error_writer");
-	assert(pointers->PtrErrorWriter != nullptr);
+	pointers->PtrSetErrorWriter = (coreclr_set_error_writer_ptr)pal_get_export(pointers->PtrCoreCrl, "coreclr_set_error_writer");
+	assert(pointers->PtrSetErrorWriter != nullptr);
 }
 
 /*
@@ -364,9 +400,9 @@ struct PalAssembly
 };
 */
 
-//-----------------------------------------------------------------------------------------
+//-----------------------------------------------------------------------------
 void pal_load_assembly(PalAssembly* assembly)
-//-----------------------------------------------------------------------------------------
+//-----------------------------------------------------------------------------
 {
-	assembly->Bytes = pal_load_resource(ASM_ID, &assembly->Size);
+	pal_load_resource(ASM_ID, assembly);
 }

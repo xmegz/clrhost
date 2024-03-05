@@ -8,6 +8,8 @@
 ## Main repository
 https://github.com/dotnet/runtime
 
+https://mattwarren.org/2017/03/23/Hitchhikers-Guide-to-the-CoreCLR-Source-Code/
+
 ## Tutorials
 https://learn.microsoft.com/en-us/dotnet/core/tutorials/netcore-hosting
 
@@ -177,6 +179,26 @@ https://github.com/dotnet/runtime/blob/main/docs/design/features/host-tracing.md
 
 Hosting Layer Apis (hostpolicy, hostfxr, coreclr)
 https://github.com/dotnet/runtime/blob/main/docs/design/features/hosting-layer-apis.md
+
+Host Error codes
+https://github.com/dotnet/runtime/blob/main/docs/design/features/host-error-codes.md
+
+c:\Projects\Microsoft\Source\runtime\src\installer\managed\Microsoft.NET.HostModel\
+c:\Projects\Microsoft\Source\runtime\src\native\corehost\
+
+## Inject Resource
+
+Inject Windows Resource to file
+https://github.com/dotnet/runtime/tree/main/src/coreclr/tools/InjectResource
+
+Linux
+https://github.com/xoofx/LibObjectFile
+
+objdump -x AppHostLinux.out
+objcopy --add-section sname=Hello.dll AppHostLinux.out New.out
+https://stackoverflow.com/questions/7370407/get-the-start-and-end-address-of-text-section-in-an-executable
+
+https://github.com/mattst88/build-id
 
 ## Bundle makeing
 
