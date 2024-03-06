@@ -13,14 +13,6 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <None Remove="10MB-TESTFILE.ORG.pdf" />
-  </ItemGroup>
-
-  <ItemGroup>
-    <EmbeddedResource Include="10MB-TESTFILE.ORG.pdf" />
-  </ItemGroup>
-
-  <ItemGroup>
     <FrameworkReference Include="Microsoft.AspNetCore.App" />
   </ItemGroup>
 

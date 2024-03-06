@@ -50,12 +50,23 @@ struct PalAssembly
 	}
 };
 
+//
+// Enums
+//
+enum pal_error
+{
+	init = -1,
+	create_delegate = -2,
+	delegate = -3,
+	shutdown_crl = -4
+};
+
 
 //
 // Public functions
 //
 void pal_info(const char* format, ...);
-void main_error(int code, const char* format, ...);
+void pal_error(int code, const char* format, ...);
 void pal_trace(const char* message);
 
 void pal_get_paths(PalPaths* path, int major_rt_version);

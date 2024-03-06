@@ -12,6 +12,7 @@
 //
 using namespace std;
 
+
 //
 // Internal functions
 //
@@ -295,7 +296,7 @@ void pal_info(const char* format, ...)
 }
 
 //-----------------------------------------------------------------------------
-void main_error(int code, const char* format, ...)
+void pal_error(int code, const char* format, ...)
 //-----------------------------------------------------------------------------
 {
 	fprintf(stderr,"[ERROR] Code:%d ", code);

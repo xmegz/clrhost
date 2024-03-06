@@ -22,13 +22,6 @@ using namespace std;
 //
 // Typedefs
 //
-
-/*
-AssemblyName("System.Private.CoreLib");
-TypeName("Internal.Runtime.InteropServices.ComponentActivator");
-MethodName("LoadAssemblyBytes");
-*/
-
 typedef int (CORECLR_CALLING_CONVENTION* AssemblyLoadEnrtyPoint)(
 	const void*	assembly_bytes,		/* Bytes of the assembly to load */
 	size_t		assembly_bytes_len,	/* Byte length of the assembly to load */
@@ -41,17 +34,6 @@ typedef int (CORECLR_CALLING_CONVENTION* NativeEntryPoint)(
 	int			argc,				/* Argument count */
 	const char* argv[]);			/*Argument value */
 
-
-//
-// Enums
-//
-enum main_error
-{
-	init = -1,
-	create_delegate = -2,
-	delegate = -3,
-	shutdown_crl = -4
-};
 
 //-----------------------------------------------------------------------------
 int main(int argc, const char* argv[])
@@ -111,7 +93,7 @@ int main(int argc, const char* argv[])
 
 
 	if (FAILED(hr))
-		main_error(main_error::init, "Initialize - 0x%08x\n", hr);
+		pal_error(pal_error::init, "Initialize - 0x%08x\n", hr);
 	else
 		pal_info("Initialize OK\n");
 
@@ -130,7 +112,7 @@ int main(int argc, const char* argv[])
 
 
 	if (FAILED(hr))
-		main_error(main_error::create_delegate, "Create delegate - 0x%08x\n", hr);
+		pal_error(pal_error::create_delegate, "Create delegate - 0x%08x\n", hr);
 	else
 		pal_info("Create delegate OK\n");
 
@@ -163,7 +145,7 @@ int main(int argc, const char* argv[])
 
 
 	if (FAILED(hr))
-		main_error(main_error::create_delegate, "Create delegate - 0x%08x\n", hr);
+		pal_error(pal_error::create_delegate, "Create delegate - 0x%08x\n", hr);
 	else
 		pal_info("Create delegate OK\n");
 
@@ -172,7 +154,7 @@ int main(int argc, const char* argv[])
 	// Call managed method
 	//
 	if (PtrNativeEntryPoint == NULL)
-		main_error(main_error::delegate, "Delegate invalid\n");
+		pal_error(pal_error::delegate, "Delegate invalid\n");
 	else
 		pal_info("Delegate OK\n");
 
@@ -187,7 +169,7 @@ int main(int argc, const char* argv[])
 	//
 	hr = Pointers.PtrShutdown(host_handle, domain_id, &exitCode);
 	if (FAILED(hr))
-		main_error(main_error::shutdown_crl, "Shutdown failed - 0x%08x\n", hr);
+		pal_error(pal_error::shutdown_crl, "Shutdown failed - 0x%08x\n", hr);
 	else
 		pal_info("Shutdown exitCode:%d\n", exitCode);
 

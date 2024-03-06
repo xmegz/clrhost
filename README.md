@@ -186,19 +186,94 @@ https://github.com/dotnet/runtime/blob/main/docs/design/features/host-error-code
 c:\Projects\Microsoft\Source\runtime\src\installer\managed\Microsoft.NET.HostModel\
 c:\Projects\Microsoft\Source\runtime\src\native\corehost\
 
-## Inject Resource
+## Inject Resource Windows
 
 Inject Windows Resource to file
 https://github.com/dotnet/runtime/tree/main/src/coreclr/tools/InjectResource
 
-Linux
+## Inject Resource Linux
 https://github.com/xoofx/LibObjectFile
 
 objdump -x AppHostLinux.out
-objcopy --add-section sname=Hello.dll AppHostLinux.out New.out
+objcopy --add-section .sname=Hello.dll AppHostLinux.out New.out
+
+objcopy --add-section .sname=Hello.dll --set-section-flags .sname=noload,readonly AppHostLinux.out New.out
 https://stackoverflow.com/questions/7370407/get-the-start-and-end-address-of-text-section-in-an-executable
 
 https://github.com/mattst88/build-id
+
+https://stackoverflow.com/questions/10863510/getting-the-sh-name-member-in-a-section-header-elf-file
+
+Test obj scan
+```bash
+mcedit dump_shdr.c
+```
+
+```c
+#include <sys/stat.h>
+#include <sys/mman.h>
+#include <elf.h>
+#include <stdlib.h>
+#include <string.h>
+#include <stdio.h>
+#include <fcntl.h>
+
+
+int print_shdr(const char *const fname, size_t size) {
+  int fd = open(fname, O_RDONLY);
+  char *p = mmap(0, size, PROT_READ, MAP_PRIVATE, fd, 0);
+
+  Elf64_Ehdr *ehdr = (Elf64_Ehdr*)p;
+  Elf64_Shdr *shdr = (Elf64_Shdr *)(p + ehdr->e_shoff);
+  int shnum = ehdr->e_shnum;
+
+  Elf64_Shdr *sh_strtab = &shdr[ehdr->e_shstrndx];
+  const char *const sh_strtab_p = p + sh_strtab->sh_offset;
+
+  for (int i = 0; i < shnum; ++i) {
+    const char* sname = sh_strtab_p + shdr[i].sh_name;
+
+    if (!strcmp(sname,".sname"))
+    {
+        printf("%2d: %4d '%s' %4lu %4lu\n", i, shdr[i].sh_name,
+               sname, shdr[i].sh_offset,shdr[i].sh_size);
+
+        printf("dump\n");
+        const char* data = p + shdr[i].sh_offset;
+        long size = shdr[i].sh_size;
+        while (size--)
+        {
+            putchar(*data);
+            data++;
+        }
+        printf("\ndump\n");
+    }
+  }
+
+  return 0;
+}
+
+int main(int argc, char *argv[])
+{
+  struct stat st;
+  const char *fname = "/proc/self/exe";
+
+  if (argc > 1)
+    fname = argv[1];
+
+  if (stat(fname, &st) != 0) {
+    perror("stat");
+    return 1;
+  }
+  return print_shdr(fname, st.st_size);
+}
+```
+
+```
+gcc dump_shdr.c
+objcopy --add-section .sname=dump_shdr.c --set-section-flags .sname=noload,readonly a.out new.out
+./new.out
+```
 
 ## Bundle makeing
 
