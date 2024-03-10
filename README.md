@@ -275,6 +275,9 @@ objcopy --add-section .sname=dump_shdr.c --set-section-flags .sname=noload,reado
 ./new.out
 ```
 
+```
+ objcopy --add-section .idr_rcdata1=Hello.dll --set-section-flags .idr_rcdata1=noload,readonly AppHostLinux.out new.out
+```
 ## Bundle makeing
 
 Single File App

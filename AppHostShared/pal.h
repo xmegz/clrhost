@@ -18,7 +18,7 @@
 //
 struct PalPaths
 {
-	std::string AppDirPath;	
+	std::string AppDirPath;
 	std::string MaxRuntimeVersion;
 	std::string RuntimeDirPath;
 	std::string AspNetDirPath;
@@ -31,10 +31,10 @@ struct PalPaths
 struct PalPointers
 {
 	void* PtrCoreCrl;
-	coreclr_initialize_ptr PtrInitialize;	
+	coreclr_initialize_ptr PtrInitialize;
 	coreclr_create_delegate_ptr PtrCreateDelegate;
 	coreclr_shutdown_2_ptr PtrShutdown;
-	coreclr_set_error_writer_ptr PtrSetErrorWriter;	
+	coreclr_set_error_writer_ptr PtrSetErrorWriter;
 };
 
 struct PalAssembly

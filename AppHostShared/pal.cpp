@@ -2,9 +2,9 @@
  * Function used to load and activate .NET Core
  ********************************************************************************************/
 
-//
-// Include
-//
+ //
+ // Include
+ //
 #include "pal.h"
 
 //
@@ -149,17 +149,17 @@ static inline void pal_load_resource(const char* identifier, PalAssembly* assemb
 	LPVOID lpAddress = LockResource(hMemory);
 	assert(lpAddress != nullptr);
 
-			
+
 	if (dwSize)
 	{
 		assembly->Bytes = (char*)malloc(dwSize);
 		memcpy(assembly->Bytes, lpAddress, dwSize);
 		assembly->Size = dwSize;
 
-	
+
 	}
 
-	
+
 }
 
 #else
@@ -168,6 +168,11 @@ static inline void pal_load_resource(const char* identifier, PalAssembly* assemb
 #include <unistd.h>
 #include <libgen.h>
 #include <dirent.h>
+#include <fcntl.h>
+#include <string.h>
+#include <sys/stat.h>
+#include <sys/mman.h>
+#include <elf.h>
 #include <cstdarg>
 
 #define RUNTIME_DIR_BASE_PATH "/usr/share/dotnet/shared/Microsoft.NETCore.App/"
@@ -177,7 +182,7 @@ static inline void pal_load_resource(const char* identifier, PalAssembly* assemb
 #define CORECLR_FILE_NAME "libcoreclr.so"
 #define DIR_SEPARATOR "/"
 #define TPA_LIST_SEPARATOR ":"
-#define ASM_ID "IDR_RCDATA1"
+#define ASM_ID ".idr_rcdata1"
 
 //-----------------------------------------------------------------------------
 static inline void* pal_load_library(const char* path)
@@ -273,7 +278,39 @@ static inline void pal_get_tpa_list(vector<string>* result, string dirname)
 static inline void pal_load_resource(const char* identifier, PalAssembly* assembly)
 //-----------------------------------------------------------------------------
 {
-	assert(false);	
+	struct stat st {};
+	const char* fname = "/proc/self/exe";
+
+	int ret = stat(fname, &st);
+	(void)ret; // dummy
+
+	assert(ret == 0);
+
+	int fd = open(fname, O_RDONLY);
+	char* p = (char*)mmap(0, st.st_size, PROT_READ, MAP_PRIVATE, fd, 0);
+
+	Elf64_Ehdr* ehdr = (Elf64_Ehdr*)p;
+	Elf64_Shdr* shdr = (Elf64_Shdr*)(p + ehdr->e_shoff);
+	int shnum = ehdr->e_shnum;
+
+	Elf64_Shdr* sh_strtab = &shdr[ehdr->e_shstrndx];
+	const char* const sh_strtab_p = p + sh_strtab->sh_offset;
+
+	for (int i = 0; i < shnum; ++i) {
+		const char* sname = sh_strtab_p + shdr[i].sh_name;
+
+		if (!strcmp(sname, identifier))
+		{
+			//printf("%2d: %4d '%s' %4lu %4lu\n", i, shdr[i].sh_name, sname, shdr[i].sh_offset, shdr[i].sh_size);
+
+			assembly->Bytes = (char*)malloc(shdr[i].sh_size);
+			memcpy(assembly->Bytes, p + shdr[i].sh_offset, shdr[i].sh_size);
+			assembly->Size = (int)shdr[i].sh_size;
+		}
+	}
+
+	munmap(p, st.st_size);
+	close(fd);
 }
 
 
@@ -287,7 +324,7 @@ static inline void pal_load_resource(const char* identifier, PalAssembly* assemb
 void pal_info(const char* format, ...)
 //-----------------------------------------------------------------------------
 {
-	fprintf(stdout,"[INFO] ");
+	fprintf(stdout, "[INFO] ");
 
 	va_list args;
 	va_start(args, format);
@@ -299,7 +336,7 @@ void pal_info(const char* format, ...)
 void pal_error(int code, const char* format, ...)
 //-----------------------------------------------------------------------------
 {
-	fprintf(stderr,"[ERROR] Code:%d ", code);
+	fprintf(stderr, "[ERROR] Code:%d ", code);
 
 	va_list args;
 	va_start(args, format);
@@ -313,7 +350,7 @@ void pal_error(int code, const char* format, ...)
 void pal_trace(const char* message)
 //-----------------------------------------------------------------------------
 {
-	fprintf(stdout,"[TRACE] %s", message);
+	fprintf(stdout, "[TRACE] %s", message);
 }
 
 
