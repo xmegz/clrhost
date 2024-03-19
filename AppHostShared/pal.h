@@ -55,16 +55,18 @@ struct PalAssembly
 //
 enum pal_error
 {
-	init = -1,
-	create_delegate = -2,
-	delegate = -3,
-	shutdown_crl = -4
+	assert = -1,
+	init = -2,
+	create_delegate = -3,
+	delegate = -4,
+	shutdown_crl = -5
 };
 
 
 //
 // Public functions
 //
+void pal_assert(bool condition, const char* function, const char* format, ...);
 void pal_info(const char* format, ...);
 void pal_error(int code, const char* format, ...);
 void pal_trace(const char* message);

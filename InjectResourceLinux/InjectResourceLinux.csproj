@@ -8,16 +8,21 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="LibObjectFile" Version="0.6.0" />
-  </ItemGroup>
-
-  <ItemGroup>
     <ProjectReference Include="..\AppHostLinux\AppHostLinux.vcxproj">
       <ReferenceOutputAssembly>false</ReferenceOutputAssembly>
       <OutputItemType>Content</OutputItemType>
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </ProjectReference>
     <ProjectReference Include="..\Hello\Hello.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Update="objcopy.exe">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+    <None Update="objdump.exe">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
   </ItemGroup>
 
 </Project>

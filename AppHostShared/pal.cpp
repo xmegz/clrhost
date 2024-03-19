@@ -40,7 +40,7 @@ static inline void* pal_load_library(const char* path)
 {
 	HMODULE hm = ::LoadLibraryA(path);
 
-	assert(hm != nullptr);
+	pal_assert(hm != nullptr, "pal_get_export", "not exist %s", path);
 
 	return (void*)hm;
 }
@@ -50,7 +50,7 @@ static inline void* pal_get_export(void* h, const char* name)
 {
 	void* f = (void*)::GetProcAddress((HMODULE)h, name);
 
-	assert(f != nullptr);
+	pal_assert(f != nullptr, "pal_get_export", "not exist %s", name);
 
 	return f;
 }
@@ -65,7 +65,8 @@ static inline string pal_get_app_dir_path(void)
 
 	hr = GetModuleFileNameA(NULL, buffer, MAX_PATH);
 
-	assert(hr > 0);
+	pal_assert(hr > 0, "pal_get_app_dir_path","not found");
+	
 
 	std::string::size_type pos = string(buffer).find_last_of("\\/");
 	return string(buffer).substr(0, pos + 1);
@@ -82,8 +83,8 @@ static inline void pal_get_tpa_list(vector<string>* result, string dirname)
 	WIN32_FIND_DATAA ffd;
 	HANDLE h = ::FindFirstFileA(search_pattern.c_str(), &ffd);
 
-	assert(h != nullptr);
-
+	pal_assert(h != nullptr, "pal_get_tpa_list", "dir not exist %s", dirname.c_str());
+	
 	string first;
 	first.append(dirname);
 	first.append(DIR_SEPARATOR);
@@ -114,7 +115,7 @@ static inline string pal_get_max_rt_version(string base_dir, int major_rt_versio
 	WIN32_FIND_DATAA ffd;
 	HANDLE h = ::FindFirstFileA(search_pattern.c_str(), &ffd);
 
-	assert(h != nullptr);
+	pal_assert(h != nullptr, "pal_get_max_rt_version", "dir not exist %s", search_pattern.c_str());
 
 	string first;
 	first.append(string(ffd.cFileName));
@@ -135,19 +136,19 @@ static inline void pal_load_resource(const char* identifier, PalAssembly* assemb
 //-----------------------------------------------------------------------------
 {
 	HMODULE hModule = GetModuleHandle(NULL); // get the handle to the current module (the executable file)
-	assert(hModule != nullptr);
+	pal_assert(hModule != nullptr,"pal_load_resource","module not found");
 
 	HRSRC hResource = FindResourceA(hModule, identifier, MAKEINTRESOURCEA(10)); // substitute RESOURCE_ID and RESOURCE_TYPE.	
-	assert(hResource != nullptr);
+	pal_assert(hResource != nullptr,"pal_load_resource","resource not found");
 
 	HGLOBAL hMemory = LoadResource(hModule, hResource);
-	assert(hMemory != nullptr);
+	pal_assert(hMemory != nullptr,"pal_load_resource", "load error");
 
 	DWORD dwSize = SizeofResource(hModule, hResource);
-	assert(dwSize != 0);
+	pal_assert(dwSize != 0,"pal_load_resource", "resource size invalid");
 
 	LPVOID lpAddress = LockResource(hMemory);
-	assert(lpAddress != nullptr);
+	pal_assert(lpAddress != nullptr,"pal_load_resource", "lock resource error");
 
 
 	if (dwSize)
@@ -189,7 +190,7 @@ static inline void* pal_load_library(const char* path)
 //-----------------------------------------------------------------------------
 {
 	void* h = dlopen(path, RTLD_LAZY | RTLD_LOCAL);
-	assert(h != nullptr);
+	pal_assert(h != nullptr, "pal_load_library", "not exist %s",path);
 	return h;
 }
 
@@ -198,7 +199,7 @@ static inline void* pal_get_export(void* h, const char* name)
 //-----------------------------------------------------------------------------
 {
 	void* f = dlsym(h, name);
-	assert(f != nullptr);
+	pal_assert(h != nullptr, "pal_get_export", "not exist %s", name);
 	return f;
 }
 
@@ -232,8 +233,8 @@ static inline string pal_get_max_rt_version(string base_dir, int major_rt_versio
 	struct dirent* entry;
 	DIR* dir = opendir(base_dir.c_str());
 
-	assert(dir != nullptr);
-
+	pal_assert(dir != nullptr, "pal_get_max_rt_version","dir not exist %s", base_dir.c_str());
+	
 	while ((entry = readdir(dir)) != NULL)
 	{
 		string file;
@@ -256,7 +257,7 @@ static inline void pal_get_tpa_list(vector<string>* result, string dirname)
 	struct dirent* entry;
 	DIR* dir = opendir(dirname.c_str());
 
-	assert(dir != nullptr);
+	pal_assert(dir != nullptr, "pal_get_tpa_list", "dir not exist %s", dirname.c_str());
 
 	while ((entry = readdir(dir)) != NULL)
 	{
@@ -296,6 +297,8 @@ static inline void pal_load_resource(const char* identifier, PalAssembly* assemb
 	Elf64_Shdr* sh_strtab = &shdr[ehdr->e_shstrndx];
 	const char* const sh_strtab_p = p + sh_strtab->sh_offset;
 
+	bool found = false;
+
 	for (int i = 0; i < shnum; ++i) {
 		const char* sname = sh_strtab_p + shdr[i].sh_name;
 
@@ -306,8 +309,12 @@ static inline void pal_load_resource(const char* identifier, PalAssembly* assemb
 			assembly->Bytes = (char*)malloc(shdr[i].sh_size);
 			memcpy(assembly->Bytes, p + shdr[i].sh_offset, shdr[i].sh_size);
 			assembly->Size = (int)shdr[i].sh_size;
+
+			found = true;
 		}
 	}
+
+	pal_assert(found == true, "pal_load_resource", "identifier not found %s", identifier);
 
 	munmap(p, st.st_size);
 	close(fd);
@@ -319,6 +326,24 @@ static inline void pal_load_resource(const char* identifier, PalAssembly* assemb
 //
 // Public functions
 //
+
+//-----------------------------------------------------------------------------
+void pal_assert(bool condition, const char *function, const char* format, ...)
+//-----------------------------------------------------------------------------
+{	
+	if (condition == false)
+	{
+		fprintf(stderr, "[ASSERT] ");
+		fprintf(stderr, "(%s) ",function);
+
+		va_list args;
+		va_start(args, format);
+		vfprintf(stderr, format, args);
+		va_end(args);
+
+		exit(pal_error::assert);
+	}
+}
 
 //-----------------------------------------------------------------------------
 void pal_info(const char* format, ...)

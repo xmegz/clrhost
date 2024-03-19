@@ -192,11 +192,22 @@ Inject Windows Resource to file
 https://github.com/dotnet/runtime/tree/main/src/coreclr/tools/InjectResource
 
 ## Inject Resource Linux
-**/////////**-
 
-*objcopy --add-section .sname=Hello.dll AppHostLinux.out New.out
+Install build tools
+```bash
+sudo apt install -y openssh-server build-essential gdb rsync make zip
+wget https://github.com/microsoft/CMake/releases/download/v3.19.4268486/cmake-3.19.4268486-MSVC_2-Linux-x64.sh
+chmod +x cmake-3.19.4268486-MSVC_2-Linux-x64.sh
+./cmake-3.19.4268486-MSVC_2-Linux-x64.sh
+```
 
+Objcopy test
+```bash
+objcopy --add-section .sname=Hello.dll AppHostLinux.out New.out
 objcopy --add-section .sname=Hello.dll --set-section-flags .sname=noload,readonly AppHostLinux.out New.out
+```
+
+Usefull links
 https://stackoverflow.com/questions/7370407/get-the-start-and-end-address-of-text-section-in-an-executable
 
 https://github.com/mattst88/build-id
@@ -277,6 +288,10 @@ objcopy --add-section .sname=dump_shdr.c --set-section-flags .sname=noload,reado
 ```
  objcopy --add-section .idr_rcdata1=Hello.dll --set-section-flags .idr_rcdata1=noload,readonly AppHostLinux.out new.out
 ```
+
+Windows crosstool for Linux X64
+https://docs.unrealengine.com/4.26/en-US/SharingAndReleasing/Linux/GettingStarted/
+
 ## Bundle makeing
 
 Single File App

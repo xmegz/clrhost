@@ -1,11 +1,7 @@
 ﻿// Licensed to the .NET Foundation under one or more agreements.
 // The .NET Foundation licenses this file to you under the MIT license.
-using LibObjectFile.Elf;
-using System;
-using System.ComponentModel.DataAnnotations;
-using System.IO;
+using System.Diagnostics;
 using System.Reflection;
-using System.Text;
 
 Console.WriteLine($"{Assembly.GetExecutingAssembly().GetName().Name} Start!");
 
@@ -31,43 +27,22 @@ if (!File.Exists(DllFileName))
     return;
 }
 
+var proc = new Process
+{
+    StartInfo = new ProcessStartInfo
+    {
+        FileName = @"objcopy",
+        Arguments = $"--add-section {SectionName}={DllFileName} --set-section-flags {SectionName}=noload,readonly {ExeFileName}",
+        UseShellExecute = false,
+        RedirectStandardOutput = true,
+        CreateNoWindow = true,
+        WorkingDirectory = AppContext.BaseDirectory
+    }
+};
 
-var ExeFileInfo = new FileInfo(ExeFileName);
-var DllFileData = File.ReadAllBytes(DllFileName);
-
-using var inStream = File.OpenRead(ExeFileName);
-var elf = ElfObjectFile.Read(inStream);
-
-var codeStream = new MemoryStream();
-codeStream.Write(DllFileData);
-codeStream.Position = 0;
-
-// Create a .text code section
-var codeSection = new ElfBinarySection(codeStream).ConfigureAs(ElfSectionSpecialType.ReadOnlyData);
-codeSection.Name = ".idr_rcdata1";
-codeSection.Type = ElfSectionType.ProgBits;
-codeSection.Alignment = 1;
-codeSection.Flags = ElfSectionFlags.None;
-
-
-var lastSection = elf.Sections[elf.Sections.Count - 1];
-codeSection.Offset = lastSection.Offset+lastSection.Size;
-
-elf.AddSection(codeSection);
-
-
-var diag = new LibObjectFile.DiagnosticBag();
-
-codeSection.UpdateLayout(diag);
-elf.UpdateLayout(diag);
-
-//using ResourceUpdaterPE updater = new(ExeFileInfo);
-//updater.AddBinaryResource(SectionName, DllFileData);
-
-elf.Print(Console.Out);
-elf.Verify();
-
-using var outStream = File.OpenWrite("helloworld2");
-elf.Write(outStream);
+proc.Start();
+var ret = proc.StandardOutput.ReadToEnd();
+proc.WaitForExit();
+Console.WriteLine(ret);
 
 Console.WriteLine($"{Assembly.GetExecutingAssembly().GetName().Name} End!");
