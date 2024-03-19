@@ -192,10 +192,9 @@ Inject Windows Resource to file
 https://github.com/dotnet/runtime/tree/main/src/coreclr/tools/InjectResource
 
 ## Inject Resource Linux
-https://github.com/xoofx/LibObjectFile
+**/////////**-
 
-objdump -x AppHostLinux.out
-objcopy --add-section .sname=Hello.dll AppHostLinux.out New.out
+*objcopy --add-section .sname=Hello.dll AppHostLinux.out New.out
 
 objcopy --add-section .sname=Hello.dll --set-section-flags .sname=noload,readonly AppHostLinux.out New.out
 https://stackoverflow.com/questions/7370407/get-the-start-and-end-address-of-text-section-in-an-executable
