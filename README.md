@@ -309,3 +309,4 @@ https://github.com/dotnet/designs/blob/main/accepted/2020/single-file/bundler.md
 Boundle marker.
 c:\Projects\Microsoft\Source\runtime\src\native\corehost\apphost\
 
+hostpolicy_context.cpp

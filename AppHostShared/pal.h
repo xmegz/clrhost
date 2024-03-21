@@ -12,6 +12,7 @@
 #include <vector>
 
 #include "coreclrhost.h"
+#include "host_runtime_contract.h"
 
 //
 // Structs
@@ -20,6 +21,8 @@ struct PalPaths
 {
 	std::string AppDirPath;
 	std::string MaxRuntimeVersion;
+	std::string RuntimeIdentifier;
+	std::string RuntimeContract;
 	std::string RuntimeDirPath;
 	std::string AspNetDirPath;
 	std::string CoreCrlFileFullPath;

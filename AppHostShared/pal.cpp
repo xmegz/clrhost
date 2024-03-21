@@ -5,6 +5,8 @@
  //
  // Include
  //
+#define _CRT_SECURE_NO_WARNINGS 
+#define _CRT_SECURE_CPP_OVERLOAD_STANDARD_NAMES 1
 #include "pal.h"
 
 //
@@ -21,6 +23,7 @@ using namespace std;
 
 #include <windows.h>
 
+
 #if defined(_WIN32) && defined(_M_IX86)
 #define RUNTIME_DIR_BASE_PATH "c:\\Program Files (x86)\\dotnet\\shared\\Microsoft.NETCore.App\\"
 #define ASPNET_DIR_BASE_PATH "c:\\Program Files (x86)\\dotnet\\shared\\Microsoft.AspNetCore.App\\"
@@ -33,6 +36,7 @@ using namespace std;
 #define DIR_SEPARATOR "\\"
 #define TPA_LIST_SEPARATOR ";"
 #define ASM_ID "IDR_RCDATA1"
+#define RUNTIME_IDENTIFIER "win-x64"
 
 //-----------------------------------------------------------------------------
 static inline void* pal_load_library(const char* path)
@@ -65,8 +69,8 @@ static inline string pal_get_app_dir_path(void)
 
 	hr = GetModuleFileNameA(NULL, buffer, MAX_PATH);
 
-	pal_assert(hr > 0, "pal_get_app_dir_path","not found");
-	
+	pal_assert(hr > 0, "pal_get_app_dir_path", "not found");
+
 
 	std::string::size_type pos = string(buffer).find_last_of("\\/");
 	return string(buffer).substr(0, pos + 1);
@@ -84,7 +88,7 @@ static inline void pal_get_tpa_list(vector<string>* result, string dirname)
 	HANDLE h = ::FindFirstFileA(search_pattern.c_str(), &ffd);
 
 	pal_assert(h != nullptr, "pal_get_tpa_list", "dir not exist %s", dirname.c_str());
-	
+
 	string first;
 	first.append(dirname);
 	first.append(DIR_SEPARATOR);
@@ -136,19 +140,19 @@ static inline void pal_load_resource(const char* identifier, PalAssembly* assemb
 //-----------------------------------------------------------------------------
 {
 	HMODULE hModule = GetModuleHandle(NULL); // get the handle to the current module (the executable file)
-	pal_assert(hModule != nullptr,"pal_load_resource","module not found");
+	pal_assert(hModule != nullptr, "pal_load_resource", "module not found");
 
 	HRSRC hResource = FindResourceA(hModule, identifier, MAKEINTRESOURCEA(10)); // substitute RESOURCE_ID and RESOURCE_TYPE.	
-	pal_assert(hResource != nullptr,"pal_load_resource","resource not found");
+	pal_assert(hResource != nullptr, "pal_load_resource", "resource not found");
 
 	HGLOBAL hMemory = LoadResource(hModule, hResource);
-	pal_assert(hMemory != nullptr,"pal_load_resource", "load error");
+	pal_assert(hMemory != nullptr, "pal_load_resource", "load error");
 
 	DWORD dwSize = SizeofResource(hModule, hResource);
-	pal_assert(dwSize != 0,"pal_load_resource", "resource size invalid");
+	pal_assert(dwSize != 0, "pal_load_resource", "resource size invalid");
 
 	LPVOID lpAddress = LockResource(hMemory);
-	pal_assert(lpAddress != nullptr,"pal_load_resource", "lock resource error");
+	pal_assert(lpAddress != nullptr, "pal_load_resource", "lock resource error");
 
 
 	if (dwSize)
@@ -184,13 +188,14 @@ static inline void pal_load_resource(const char* identifier, PalAssembly* assemb
 #define DIR_SEPARATOR "/"
 #define TPA_LIST_SEPARATOR ":"
 #define ASM_ID ".idr_rcdata1"
+#define RUNTIME_IDENTIFIER "linux-x64"
 
 //-----------------------------------------------------------------------------
 static inline void* pal_load_library(const char* path)
 //-----------------------------------------------------------------------------
 {
 	void* h = dlopen(path, RTLD_LAZY | RTLD_LOCAL);
-	pal_assert(h != nullptr, "pal_load_library", "not exist %s",path);
+	pal_assert(h != nullptr, "pal_load_library", "not exist %s", path);
 	return h;
 }
 
@@ -233,8 +238,8 @@ static inline string pal_get_max_rt_version(string base_dir, int major_rt_versio
 	struct dirent* entry;
 	DIR* dir = opendir(base_dir.c_str());
 
-	pal_assert(dir != nullptr, "pal_get_max_rt_version","dir not exist %s", base_dir.c_str());
-	
+	pal_assert(dir != nullptr, "pal_get_max_rt_version", "dir not exist %s", base_dir.c_str());
+
 	while ((entry = readdir(dir)) != NULL)
 	{
 		string file;
@@ -328,13 +333,13 @@ static inline void pal_load_resource(const char* identifier, PalAssembly* assemb
 //
 
 //-----------------------------------------------------------------------------
-void pal_assert(bool condition, const char *function, const char* format, ...)
+void pal_assert(bool condition, const char* function, const char* format, ...)
 //-----------------------------------------------------------------------------
-{	
+{
 	if (condition == false)
 	{
 		fprintf(stderr, "[ASSERT] ");
-		fprintf(stderr, "(%s) ",function);
+		fprintf(stderr, "(%s) ", function);
 
 		va_list args;
 		va_start(args, format);
@@ -378,6 +383,45 @@ void pal_trace(const char* message)
 	fprintf(stdout, "[TRACE] %s", message);
 }
 
+//-----------------------------------------------------------------------------
+inline size_t pal_utf8string(const string str, char* out_buffer, size_t buffer_len)
+//-----------------------------------------------------------------------------
+{
+	size_t len = str.size() + 1;
+	if (buffer_len < len)
+		return len;	
+	strncpy(out_buffer, str.c_str(), str.size());	
+	out_buffer[len - 1] = '\0';
+	return len;
+}
+
+
+//-----------------------------------------------------------------------------
+ size_t HOST_CONTRACT_CALLTYPE get_runtime_property(
+	const char* key,
+	char* value_buffer,
+	size_t value_buffer_size,
+	void* contract_context)
+	//-----------------------------------------------------------------------------
+{
+	pal_info("get_runtime_property %s", key);
+
+	if (strcmp(key, HOST_PROPERTY_ENTRY_ASSEMBLY_NAME) == 0)
+	{
+		return pal_utf8string(string("Test.dll"), value_buffer, value_buffer_size);
+	}
+
+	if (strcmp(key, HOST_PROPERTY_NATIVE_DLL_SEARCH_DIRECTORIES) == 0)
+	{
+		return pal_utf8string(pal_get_app_dir_path(), value_buffer, value_buffer_size);
+	}
+
+	return 0;
+}
+
+
+host_runtime_contract volatile host_contract = { sizeof(host_runtime_contract), &get_runtime_property, &get_runtime_property };
+
 
 /*
 struct PalPaths
@@ -399,6 +443,11 @@ void pal_get_paths(PalPaths* paths, int major_rt_version)
 {
 	paths->AppDirPath = pal_get_app_dir_path();
 	paths->MaxRuntimeVersion = pal_get_max_rt_version(string(RUNTIME_DIR_BASE_PATH), major_rt_version);
+	paths->RuntimeIdentifier = string(RUNTIME_IDENTIFIER);
+
+	char buffer[40];
+	snprintf(buffer, 40, "0x%zx", (size_t)(&host_contract));
+	paths->RuntimeContract = string(buffer);
 
 	paths->RuntimeDirPath = string(RUNTIME_DIR_BASE_PATH);
 	paths->RuntimeDirPath.append(paths->MaxRuntimeVersion);
@@ -414,6 +463,7 @@ void pal_get_paths(PalPaths* paths, int major_rt_version)
 	paths->TpaFiles.clear();
 	pal_get_tpa_list(&paths->TpaFiles, paths->RuntimeDirPath.c_str());
 	pal_get_tpa_list(&paths->TpaFiles, paths->AspNetDirPath.c_str());
+	pal_get_tpa_list(&paths->TpaFiles, paths->AppDirPath.c_str());
 
 	for (unsigned int i = 0; i < paths->TpaFiles.size(); i++)
 	{
@@ -469,3 +519,10 @@ void pal_load_assembly(PalAssembly* assembly)
 {
 	pal_load_resource(ASM_ID, assembly);
 }
+
+
+
+
+
+
+

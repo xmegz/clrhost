@@ -19,6 +19,7 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="$(MSBuildThisFileDirectory)coreclrhost.h" />
+    <ClInclude Include="$(MSBuildThisFileDirectory)host_runtime_contract.h" />
     <ClInclude Include="$(MSBuildThisFileDirectory)pal.h" />
   </ItemGroup>
 </Project>

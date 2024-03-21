@@ -64,14 +64,24 @@ int main(int argc, const char* argv[])
 				"APPBASE",
 				"APP_NAME",
 				"TRUSTED_PLATFORM_ASSEMBLIES",
-				"APP_PATHS"
+				"HOST_RUNTIME_CONTRACT"
+				
+				/*"APP_PATHS"
+				"APP_CONTEXT_BASE_DIRECTORY"
+				"NATIVE_DLL_SEARCH_DIRECTORIES"
+				"RUNTIME_IDENTIFIER"*/
 	};
 	
 	const char* property_values[] = {
 		Paths.AppDirPath.c_str(),	// APPBASE
-		"APPHOST",					// APP_NAME
+		"APP_2",						// APP_NAME
 		Paths.TpaList.c_str(),		// TRUSTED_PLATFORM_ASSEMBLIES
-		Paths.AppDirPath.c_str()	// APP_PATHS
+		Paths.RuntimeContract.c_str(),	// HOST_RUNTIME_CONTRACT
+		/*
+		Paths.AppDirPath.c_str(),	// APP_CONTEXT_BASE_DIRECTORY
+		Paths.AppDirPath.c_str(),	// NATIVE_DLL_SEARCH_DIRECTORIES
+		Paths.RuntimeIdentifier.c_str()	// RUNTIME_IDENTIFIER
+		*/
 	};
 
 	int property_count = sizeof(property_keys) / sizeof(char*);
@@ -121,6 +131,7 @@ int main(int argc, const char* argv[])
 	// Call managed method
 	//
 
+	/*
 	pal_load_assembly(&Assembly);
 
 	pal_info("Call assembly load addr:0x%08x size:%ld\n",Assembly.Bytes, Assembly.Size);
@@ -128,6 +139,7 @@ int main(int argc, const char* argv[])
 	hr = PtrAssemblyLoadEnrtyPoint(Assembly.Bytes, Assembly.Size, NULL, 0, NULL, NULL);
 
 	pal_info("Assembly load ret - 0x%08x\n", hr);
+	*/
 
 
 	//

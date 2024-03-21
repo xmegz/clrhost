@@ -50,6 +50,14 @@ namespace Hello
             logger?.LogInformation($"Ctor {Assembly.GetExecutingAssembly().FullName}");
         }
 
+        public static void DebugGetData(string str)
+        {
+            var obj = System.AppContext.GetData(str);
+            if (obj != null)
+                Console.WriteLine($"{str} : {obj.ToString()}");
+        }
+
+
         public static void Main(string[] arg)
         {
             var logger = LoggerFactory.CreateLogger<Program>();
@@ -58,6 +66,23 @@ namespace Hello
 
             foreach (var i in arg)
                 logger?.LogInformation($"Arg: {i}");
+
+            DebugGetData("APP_PATHS");
+            DebugGetData("APP_CONTEXT_BASE_DIRECTORY");
+            DebugGetData("APP_CONTEXT_DEPS_FILES");
+            DebugGetData("APP_NAME");
+            DebugGetData("APPBASE");
+            DebugGetData("FX_DEPS_FILE");
+            DebugGetData("HOST_RUNTIME_CONTRACT");
+            DebugGetData("PROBING_DIRECTORIES");
+            DebugGetData("NATIVE_DLL_SEARCH_DIRECTORIES");
+            DebugGetData("PROBING_DIRECTORIES");
+            DebugGetData("RUNTIME_IDENTIFIER");
+            DebugGetData("STARTUP_HOOKS");
+            DebugGetData("TRUSTED_PLATFORM_ASSEMBLIES");
+            
+
+
 
             Data.Test();
 
