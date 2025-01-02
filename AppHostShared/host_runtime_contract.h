@@ -1,3 +1,4 @@
+// Loaded from https://github.com/dotnet/runtime/blob/main/src/native/corehost/host_runtime_contract.h
 // Licensed to the .NET Foundation under one or more agreements.
 // The .NET Foundation licenses this file to you under the MIT license.
 

@@ -1,6 +1,8 @@
-/********************************************************************************************
- * Function used to load and activate .NET Core
- ********************************************************************************************/
+/*-----------------------------------------------------------------------------
+ * Project:    CrlHost
+ * Repository: https://github.com/xmegz/clrhost
+ * Author:     Pádár Tamás
+ -----------------------------------------------------------------------------*/
 
  //
  // Include
@@ -23,14 +25,8 @@ using namespace std;
 
 #include <windows.h>
 
-
-#if defined(_WIN32) && defined(_M_IX86)
-#define RUNTIME_DIR_BASE_PATH "c:\\Program Files (x86)\\dotnet\\shared\\Microsoft.NETCore.App\\"
-#define ASPNET_DIR_BASE_PATH "c:\\Program Files (x86)\\dotnet\\shared\\Microsoft.AspNetCore.App\\"
-#else
 #define RUNTIME_DIR_BASE_PATH "c:\\Program Files\\dotnet\\shared\\Microsoft.NETCore.App\\"
 #define ASPNET_DIR_BASE_PATH "c:\\Program Files\\dotnet\\shared\\Microsoft.AspNetCore.App\\"
-#endif
 
 #define CORECLR_FILE_NAME "coreclr.dll"
 #define DIR_SEPARATOR "\\"
@@ -80,6 +76,12 @@ static inline string pal_get_app_dir_path(void)
 static inline void pal_get_tpa_list(vector<string>* result, string dirname)
 //-----------------------------------------------------------------------------
 {
+	struct stat st {};
+
+	// Check dir is exist
+	if (stat(dirname.c_str(), &st) != 0)
+		return;
+
 	string search_pattern = dirname;
 	search_pattern.append(DIR_SEPARATOR);
 	search_pattern.append("*.dll");
@@ -87,7 +89,8 @@ static inline void pal_get_tpa_list(vector<string>* result, string dirname)
 	WIN32_FIND_DATAA ffd;
 	HANDLE h = ::FindFirstFileA(search_pattern.c_str(), &ffd);
 
-	pal_assert(h != nullptr, "pal_get_tpa_list", "dir not exist %s", dirname.c_str());
+	if (INVALID_HANDLE_VALUE == h)
+		return;
 
 	string first;
 	first.append(dirname);
@@ -99,10 +102,31 @@ static inline void pal_get_tpa_list(vector<string>* result, string dirname)
 	{
 		string item;
 		item.append(dirname);
-		item.append(DIR_SEPARATOR);
+		if (dirname.back() != DIR_SEPARATOR[0])
+			item.append(DIR_SEPARATOR);
 		item.append(string(ffd.cFileName));
 		result->push_back(item);
 	}
+}
+
+//-----------------------------------------------------------------------------
+static inline void pal_get_probe_paths(vector<string>* result, string base_path)
+//-----------------------------------------------------------------------------
+{	
+	string path;
+
+	path = base_path;
+	path.append("runtimes\\win-x64\\native");
+	result->push_back(path);
+
+	path = base_path;
+	path.append("runtimes\\win\\lib\\netcoreapp3.0");
+	result->push_back(path);
+	
+	path = base_path;
+	path.append("runtimes\\win\\lib\\netstandard2.0");
+	result->push_back(path);	
+	
 }
 
 //-----------------------------------------------------------------------------
@@ -160,11 +184,7 @@ static inline void pal_load_resource(const char* identifier, PalAssembly* assemb
 		assembly->Bytes = (char*)malloc(dwSize);
 		memcpy(assembly->Bytes, lpAddress, dwSize);
 		assembly->Size = dwSize;
-
-
 	}
-
-
 }
 
 #else
@@ -259,6 +279,12 @@ static inline string pal_get_max_rt_version(string base_dir, int major_rt_versio
 static inline void pal_get_tpa_list(vector<string>* result, string dirname)
 //-----------------------------------------------------------------------------
 {
+	struct stat st {};
+
+	// Check dir is exist
+	if (stat(dirname.c_str(), &st) != 0)
+		return;
+
 	struct dirent* entry;
 	DIR* dir = opendir(dirname.c_str());
 
@@ -273,11 +299,30 @@ static inline void pal_get_tpa_list(vector<string>* result, string dirname)
 		{
 			file.clear();
 			file.append(dirname);
-			file.append(DIR_SEPARATOR);
+			if (dirname.back() != DIR_SEPARATOR[0])
+				file.append(DIR_SEPARATOR);
 			file.append(entry->d_name);
 			result->push_back(file);
 		}
 	}
+}
+//-----------------------------------------------------------------------------
+static inline void pal_get_probe_paths(vector<string>* result, string base_path)
+//-----------------------------------------------------------------------------
+{	
+	string path;
+	
+	path = base_path;
+	path.append("runtimes/linux-x64/native/");	
+	result->push_back(path);
+
+	path = base_path;
+	path.append("runtimes/linux/lib/netstandard2.0/");	
+	result->push_back(path);
+
+	path = base_path;
+	path.append("runtimes/unix/lib/netcoreapp3.0/");	
+	result->push_back(path);	
 }
 
 //-----------------------------------------------------------------------------
@@ -351,6 +396,20 @@ void pal_assert(bool condition, const char* function, const char* format, ...)
 }
 
 //-----------------------------------------------------------------------------
+void pal_debug(const char* format, ...)
+//-----------------------------------------------------------------------------
+{
+#ifdef _DEBUG
+	fprintf(stdout, "[DEBUG] ");
+
+	va_list args;
+	va_start(args, format);
+	vfprintf(stdout, format, args);
+	va_end(args);
+#endif
+}
+
+//-----------------------------------------------------------------------------
 void pal_info(const char* format, ...)
 //-----------------------------------------------------------------------------
 {
@@ -388,27 +447,25 @@ inline size_t pal_utf8string(const string str, char* out_buffer, size_t buffer_l
 //-----------------------------------------------------------------------------
 {
 	size_t len = str.size() + 1;
+	
 	if (buffer_len < len)
 		return len;	
+	
 	strncpy(out_buffer, str.c_str(), str.size());	
+	
 	out_buffer[len - 1] = '\0';
 	return len;
 }
 
-
 //-----------------------------------------------------------------------------
- size_t HOST_CONTRACT_CALLTYPE get_runtime_property(
-	const char* key,
-	char* value_buffer,
-	size_t value_buffer_size,
-	void* contract_context)
-	//-----------------------------------------------------------------------------
+ size_t HOST_CONTRACT_CALLTYPE get_runtime_property(const char* key,char* value_buffer,size_t value_buffer_size,void* contract_context)
+//-----------------------------------------------------------------------------
 {
 	pal_info("get_runtime_property %s", key);
 
 	if (strcmp(key, HOST_PROPERTY_ENTRY_ASSEMBLY_NAME) == 0)
 	{
-		return pal_utf8string(string("Test.dll"), value_buffer, value_buffer_size);
+		return pal_utf8string(string("Hello.dll"), value_buffer, value_buffer_size);
 	}
 
 	if (strcmp(key, HOST_PROPERTY_NATIVE_DLL_SEARCH_DIRECTORIES) == 0)
@@ -419,23 +476,8 @@ inline size_t pal_utf8string(const string str, char* out_buffer, size_t buffer_l
 	return 0;
 }
 
+host_runtime_contract volatile host_contract = { sizeof(host_runtime_contract),(void*) &get_runtime_property, &get_runtime_property };
 
-host_runtime_contract volatile host_contract = { sizeof(host_runtime_contract), &get_runtime_property, &get_runtime_property };
-
-
-/*
-struct PalPaths
-{
-	std::string AppDirPath;
-	std::string MaxRuntimeVersion;
-	std::string RuntimeDirPath;
-	std::string AspNetDirPath;
-	std::string CoreCrlFileFullPath;
-	std::string CoreCrlFileName;
-	std::vector<std::string> TpaFiles;
-	std::string TpaList;
-};
-*/
 
 //-----------------------------------------------------------------------------
 void pal_get_paths(PalPaths* paths, int major_rt_version)
@@ -444,10 +486,6 @@ void pal_get_paths(PalPaths* paths, int major_rt_version)
 	paths->AppDirPath = pal_get_app_dir_path();
 	paths->MaxRuntimeVersion = pal_get_max_rt_version(string(RUNTIME_DIR_BASE_PATH), major_rt_version);
 	paths->RuntimeIdentifier = string(RUNTIME_IDENTIFIER);
-
-	char buffer[40];
-	snprintf(buffer, 40, "0x%zx", (size_t)(&host_contract));
-	paths->RuntimeContract = string(buffer);
 
 	paths->RuntimeDirPath = string(RUNTIME_DIR_BASE_PATH);
 	paths->RuntimeDirPath.append(paths->MaxRuntimeVersion);
@@ -460,28 +498,44 @@ void pal_get_paths(PalPaths* paths, int major_rt_version)
 	paths->CoreCrlFileFullPath.append(DIR_SEPARATOR);
 	paths->CoreCrlFileFullPath.append(CORECLR_FILE_NAME);
 
-	paths->TpaFiles.clear();
-	pal_get_tpa_list(&paths->TpaFiles, paths->RuntimeDirPath.c_str());
-	pal_get_tpa_list(&paths->TpaFiles, paths->AspNetDirPath.c_str());
-	pal_get_tpa_list(&paths->TpaFiles, paths->AppDirPath.c_str());
+	paths->ProbePaths.clear();
+	
+	// Probe Paths
+	pal_get_probe_paths(&paths->ProbePaths, paths->AppDirPath);
+	paths->ProbePaths.push_back(paths->RuntimeDirPath);
+	paths->ProbePaths.push_back(paths->AspNetDirPath);
+	paths->ProbePaths.push_back(paths->AppDirPath);
 
+	// Probe List
+	for (unsigned int i = 0; i < paths->ProbePaths.size(); i++)
+	{		
+		paths->ProbeList.append(paths->ProbePaths[i]);
+		if (paths->ProbePaths[i].back() != DIR_SEPARATOR[0])
+			paths->ProbeList.append(DIR_SEPARATOR);
+		
+		paths->ProbeList.append(TPA_LIST_SEPARATOR);
+	}
+
+	paths->TpaFiles.clear();
+	
+	// Tpa Files
+	for (unsigned int i = 0; i < paths->ProbePaths.size(); i++)
+	{		
+		pal_get_tpa_list(&paths->TpaFiles, paths->ProbePaths[i].c_str());
+	}
+
+	// Tpa List
 	for (unsigned int i = 0; i < paths->TpaFiles.size(); i++)
 	{
 		paths->TpaList.append(paths->TpaFiles[i]);
 		paths->TpaList.append(TPA_LIST_SEPARATOR);
 	}
-}
 
-/*
-struct PalPointers
-{
-	void* PtrCoreCrl;
-	coreclr_initialize_ptr PtrInitialize;
-	coreclr_create_delegate_ptr PtrCreateDelegate;
-	coreclr_shutdown_2_ptr PtrShutdown;
-	coreclr_set_error_writer_ptr PtrSetErrorWriter;
-};
-*/
+	// Runtime Contract
+	char buffer[40];
+	snprintf(buffer, 40, "0x%zx", (size_t)(&host_contract));
+	paths->RuntimeContract = string(buffer);
+}
 
 //-----------------------------------------------------------------------------
 void pal_get_pointers(PalPointers* pointers, const char* corecrl_file_name)
@@ -505,24 +559,9 @@ void pal_get_pointers(PalPointers* pointers, const char* corecrl_file_name)
 	assert(pointers->PtrSetErrorWriter != nullptr);
 }
 
-/*
-struct PalAssembly
-{
-	char* Bytes;
-	int Size;
-};
-*/
-
 //-----------------------------------------------------------------------------
 void pal_load_assembly(PalAssembly* assembly)
 //-----------------------------------------------------------------------------
 {
 	pal_load_resource(ASM_ID, assembly);
 }
-
-
-
-
-
-
-

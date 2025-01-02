@@ -13,7 +13,7 @@ namespace Hello
         {
             var logger = Program.LoggerFactory.CreateLogger<Data>();
 
-            logger?.LogInformation($"Test Data {JsonSerializer.Serialize(new Data(0, "Name"))}");
+            logger?.LogInformation($"Test Json Serializer {JsonSerializer.Serialize(new Data(0, "Name"))}");
         }
     };
 
@@ -22,7 +22,7 @@ namespace Hello
         public static ILoggerFactory LoggerFactory { get; set; } = null;
 
         [UnmanagedCallersOnly]
-        private static void NativeEntryPoint(int argc, IntPtr argv)
+        public static void NativeEntryPoint(int argc, IntPtr argv)
         {
             static string[] MarshalArgv(int argc, IntPtr argv)
             {
@@ -50,11 +50,14 @@ namespace Hello
             logger?.LogInformation($"Ctor {Assembly.GetExecutingAssembly().FullName}");
         }
 
-        public static void DebugGetData(string str)
+        public static void DebugAppContextData(string str)
         {
+            var logger = LoggerFactory.CreateLogger<Program>();
+
             var obj = System.AppContext.GetData(str);
+                        
             if (obj != null)
-                Console.WriteLine($"{str} : {obj.ToString()}");
+                logger?.LogInformation($"{str} : {obj.ToString()}");
         }
 
 
@@ -64,29 +67,27 @@ namespace Hello
 
             logger?.LogInformation($"Start {DateTime.Now}");
 
-            foreach (var i in arg)
-                logger?.LogInformation($"Arg: {i}");
+            for(int i=0; i<arg.Length; i++)
+                logger?.LogInformation($"Arg[{i}]: {arg[i]}");
 
-            DebugGetData("APP_PATHS");
-            DebugGetData("APP_CONTEXT_BASE_DIRECTORY");
-            DebugGetData("APP_CONTEXT_DEPS_FILES");
-            DebugGetData("APP_NAME");
-            DebugGetData("APPBASE");
-            DebugGetData("FX_DEPS_FILE");
-            DebugGetData("HOST_RUNTIME_CONTRACT");
-            DebugGetData("PROBING_DIRECTORIES");
-            DebugGetData("NATIVE_DLL_SEARCH_DIRECTORIES");
-            DebugGetData("PROBING_DIRECTORIES");
-            DebugGetData("RUNTIME_IDENTIFIER");
-            DebugGetData("STARTUP_HOOKS");
-            DebugGetData("TRUSTED_PLATFORM_ASSEMBLIES");
+            DebugAppContextData("APP_PATHS");
+            DebugAppContextData("APP_CONTEXT_BASE_DIRECTORY");
+            DebugAppContextData("APP_CONTEXT_DEPS_FILES");
+            DebugAppContextData("APP_NAME");
+            DebugAppContextData("APPBASE");
+            DebugAppContextData("FX_DEPS_FILE");
+            DebugAppContextData("HOST_RUNTIME_CONTRACT");
+            DebugAppContextData("PROBING_DIRECTORIES");
+            DebugAppContextData("NATIVE_DLL_SEARCH_DIRECTORIES");
+            DebugAppContextData("PROBING_DIRECTORIES");
+            DebugAppContextData("RUNTIME_IDENTIFIER");
+            DebugAppContextData("STARTUP_HOOKS");
+            DebugAppContextData("TRUSTED_PLATFORM_ASSEMBLIES");
             
-
-
-
             Data.Test();
 
             logger?.LogInformation($"End {DateTime.Now}");
+
             Environment.ExitCode = 11;
         }
     }

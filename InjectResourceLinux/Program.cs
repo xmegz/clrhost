@@ -1,5 +1,9 @@
-﻿// Licensed to the .NET Foundation under one or more agreements.
-// The .NET Foundation licenses this file to you under the MIT license.
+﻿/*-----------------------------------------------------------------------------
+ * Project:    CrlHost
+ * Repository: https://github.com/xmegz/clrhost
+ * Author:     Pádár Tamás
+ -----------------------------------------------------------------------------*/
+
 using System.Diagnostics;
 using System.Reflection;
 
@@ -27,12 +31,19 @@ if (!File.Exists(DllFileName))
     return;
 }
 
+string OutPath = Path.Combine(Path.GetDirectoryName(ExeFileName) ?? "", "out");
+string OutFileName = Path.Combine(OutPath, Path.GetFileNameWithoutExtension(DllFileName) + ".full.exe");
+
+Directory.CreateDirectory(OutPath);
+File.Copy(ExeFileName, OutFileName, true);
+
+
 var proc = new Process
 {
     StartInfo = new ProcessStartInfo
     {
         FileName = @"objcopy",
-        Arguments = $"--add-section {SectionName}={DllFileName} --set-section-flags {SectionName}=noload,readonly {ExeFileName}",
+        Arguments = $"--add-section {SectionName}={DllFileName} --set-section-flags {SectionName}=noload,readonly {OutFileName}",
         UseShellExecute = false,
         RedirectStandardOutput = true,
         CreateNoWindow = true,

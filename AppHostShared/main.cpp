@@ -1,3 +1,9 @@
+/*-----------------------------------------------------------------------------
+ * Project:    CrlHost
+ * Repository: https://github.com/xmegz/clrhost
+ * Author:     Pádár Tamás
+ -----------------------------------------------------------------------------*/
+
 //
 // Include
 //
@@ -43,18 +49,16 @@ int main(int argc, const char* argv[])
 	PalPointers Pointers;
 	PalAssembly Assembly;
 
-	pal_info("Get paths\n");
-
+	pal_info("Apphost start build :%s %s\n",__DATE__, __TIME__);
+	
 	pal_get_paths(&Paths, DOTNET_VERSION);
 	pal_info("CoreCLR path:%s\n", Paths.CoreCrlFileFullPath.c_str());
-
-	pal_info("Get pointers\n");
 
 	pal_get_pointers(&Pointers, Paths.CoreCrlFileFullPath.c_str());
 	pal_info("CoreCLR pointer:0x%08x\n", Pointers.PtrCoreCrl);
 
-	pal_info("Set error writer\n");
 	Pointers.PtrSetErrorWriter(pal_trace);
+	pal_info("Error writer setted\n");
 
 
 	//
@@ -64,28 +68,25 @@ int main(int argc, const char* argv[])
 				"APPBASE",
 				"APP_NAME",
 				"TRUSTED_PLATFORM_ASSEMBLIES",
+				"APP_PATHS",
+				"NATIVE_DLL_SEARCH_DIRECTORIES",
 				"HOST_RUNTIME_CONTRACT"
-				
-				/*"APP_PATHS"
-				"APP_CONTEXT_BASE_DIRECTORY"
-				"NATIVE_DLL_SEARCH_DIRECTORIES"
-				"RUNTIME_IDENTIFIER"*/
 	};
 	
 	const char* property_values[] = {
-		Paths.AppDirPath.c_str(),	// APPBASE
-		"APP_2",						// APP_NAME
-		Paths.TpaList.c_str(),		// TRUSTED_PLATFORM_ASSEMBLIES
-		Paths.RuntimeContract.c_str(),	// HOST_RUNTIME_CONTRACT
-		/*
-		Paths.AppDirPath.c_str(),	// APP_CONTEXT_BASE_DIRECTORY
-		Paths.AppDirPath.c_str(),	// NATIVE_DLL_SEARCH_DIRECTORIES
-		Paths.RuntimeIdentifier.c_str()	// RUNTIME_IDENTIFIER
-		*/
+		Paths.AppDirPath.c_str(),	   // APPBASE
+		"APPHOST",					   // APP_NAME
+		Paths.TpaList.c_str(),		   // TRUSTED_PLATFORM_ASSEMBLIES
+		Paths.AppDirPath.c_str(),	   // APP_PATHS
+		Paths.ProbeList.c_str(),	   // NATIVE_DLL_SEARCH_DIRECTORIES
+		Paths.RuntimeContract.c_str(), // HOST_RUNTIME_CONTRACT
 	};
 
 	int property_count = sizeof(property_keys) / sizeof(char*);
 
+	pal_debug("Paths.ProbeList: %s\n\n\n", Paths.ProbeList.c_str());
+	pal_debug("Paths.TpaList: %s\n\n\n", Paths.TpaList.c_str());
+	
 	//
 	// Initialize the CoreCLR. Creates and starts CoreCLR host and creates an AppDomain
 	//
@@ -130,8 +131,7 @@ int main(int argc, const char* argv[])
 	//
 	// Call managed method
 	//
-
-	/*
+	
 	pal_load_assembly(&Assembly);
 
 	pal_info("Call assembly load addr:0x%08x size:%ld\n",Assembly.Bytes, Assembly.Size);
@@ -139,8 +139,7 @@ int main(int argc, const char* argv[])
 	hr = PtrAssemblyLoadEnrtyPoint(Assembly.Bytes, Assembly.Size, NULL, 0, NULL, NULL);
 
 	pal_info("Assembly load ret - 0x%08x\n", hr);
-	*/
-
+	
 
 	//
 	// Create a native callable function pointer for a managed method.
@@ -166,11 +165,17 @@ int main(int argc, const char* argv[])
 	// Call managed method
 	//
 	if (PtrNativeEntryPoint == NULL)
-		pal_error(pal_error::delegate, "Delegate invalid\n");
+		pal_error(pal_error::delegate, "Delegate entryPoint invalid\n");
 	else
-		pal_info("Delegate OK\n");
+		pal_info("Delegate entryPoint OK\n");
 
-	pal_info("Call delegate...\n");
+	pal_info("Call entryPoint delegate...\n");
+	
+	//
+	// Skip first argument
+	//
+	++argv;
+	argc--;
 
 	PtrNativeEntryPoint(argc, argv);
 
@@ -184,6 +189,11 @@ int main(int argc, const char* argv[])
 		pal_error(pal_error::shutdown_crl, "Shutdown failed - 0x%08x\n", hr);
 	else
 		pal_info("Shutdown exitCode:%d\n", exitCode);
+
+	//
+	// Free resource memory
+	//
+	Assembly.Free();
 
 	return exitCode;
 }

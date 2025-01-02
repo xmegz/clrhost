@@ -1,5 +1,9 @@
-// Licensed to the .NET Foundation under one or more agreements.
-// The .NET Foundation licenses this file to you under the MIT license.
+/*-----------------------------------------------------------------------------
+ * Project:    CrlHost
+ * Repository: https://github.com/xmegz/clrhost
+ * Author:     Pádár Tamás
+ -----------------------------------------------------------------------------*/
+
 using System;
 using System.ComponentModel.DataAnnotations;
 using System.IO;
@@ -29,11 +33,17 @@ if (!File.Exists(DllFileName))
     return;
 }
 
+string OutPath = Path.Combine(Path.GetDirectoryName(ExeFileName) ?? "", "out");
+string OutFileName = Path.Combine(OutPath, Path.GetFileNameWithoutExtension(DllFileName) + ".full.exe");
 
-var ExeFileInfo = new FileInfo(ExeFileName);
+Directory.CreateDirectory(OutPath);
+File.Copy(ExeFileName, OutFileName, true);
+
+
+var OutFileInfo = new FileInfo(OutFileName);
 var DllFileData = File.ReadAllBytes(DllFileName);
 
-using ResourceUpdaterPE updater = new(ExeFileInfo);
+using ResourceUpdaterPE updater = new(OutFileInfo);
 updater.AddBinaryResource(ResourceName, DllFileData);
 
 Console.WriteLine($"{Assembly.GetExecutingAssembly().GetName().Name} End!");

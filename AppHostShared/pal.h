@@ -1,3 +1,8 @@
+/*-----------------------------------------------------------------------------
+ * Project:    CrlHost
+ * Repository: https://github.com/xmegz/clrhost
+ * Author:     Pádár Tamás
+ -----------------------------------------------------------------------------*/
 #ifndef __PAL_H__
 #define __PAL_H__
 
@@ -25,6 +30,8 @@ struct PalPaths
 	std::string RuntimeContract;
 	std::string RuntimeDirPath;
 	std::string AspNetDirPath;
+	std::vector<std::string> ProbePaths;
+	std::string ProbeList;
 	std::string CoreCrlFileFullPath;
 	std::string CoreCrlFileName;
 	std::vector<std::string> TpaFiles;
@@ -46,6 +53,11 @@ struct PalAssembly
 	int Size = 0;
 
 	~PalAssembly()
+	{
+		Free();
+	}
+	
+	void Free(void)
 	{
 		if (Bytes != nullptr) free(Bytes);
 		Bytes = nullptr;
@@ -71,6 +83,7 @@ enum pal_error
 //
 void pal_assert(bool condition, const char* function, const char* format, ...);
 void pal_info(const char* format, ...);
+void pal_debug(const char* format, ...);
 void pal_error(int code, const char* format, ...);
 void pal_trace(const char* message);
 
