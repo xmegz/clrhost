@@ -55,7 +55,7 @@ namespace Hello
             var logger = LoggerFactory.CreateLogger<Program>();
 
             var obj = System.AppContext.GetData(str);
-                        
+
             if (obj != null)
                 logger?.LogInformation($"{str} : {obj.ToString()}");
         }
@@ -67,8 +67,7 @@ namespace Hello
 
             logger?.LogInformation($"Start {DateTime.Now}");
 
-            for(int i=0; i<arg.Length; i++)
-                logger?.LogInformation($"Arg[{i}]: {arg[i]}");
+            logger?.LogInformation($"Args: {String.Join(',', arg)}");
 
             DebugAppContextData("APP_PATHS");
             DebugAppContextData("APP_CONTEXT_BASE_DIRECTORY");
@@ -82,8 +81,8 @@ namespace Hello
             DebugAppContextData("PROBING_DIRECTORIES");
             DebugAppContextData("RUNTIME_IDENTIFIER");
             DebugAppContextData("STARTUP_HOOKS");
-            DebugAppContextData("TRUSTED_PLATFORM_ASSEMBLIES");
-            
+            //DebugAppContextData("TRUSTED_PLATFORM_ASSEMBLIES");
+
             Data.Test();
 
             logger?.LogInformation($"End {DateTime.Now}");

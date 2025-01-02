@@ -1,9 +1,160 @@
-# .Net Core Runtime Host Start
-- Simple conception howto start .Net Core Runtime from native code
-- C++ part and C# part debugging is also possible.
+# How to Embed .NET Core DLL into a Custom C++ Host Loader
 
-- Simple conception for windows to inject dotnet assembly to native exe as resource
-- Just for dotnet 8
+## Concept
+Load .NET project DLLs directly from PE resources or ELF sections and initialize CoreCLR from these embedded resources.
+
+## Why better than single file publish ?
+
+**True Memory-Based Operation**
+The resource injection technique allows embedded .NET DLLs to be loaded directly from memory without relying on the file system.
+
+**Greater Flexibility**
+Injected DLLs are placed in custom sections or embedded as resources within the host binary, enabling completely customizable loading, management, and execution.
+
+**Enhanced Security**
+The injection method allows resources to be encrypted, reducing the chances of reverse engineering and manipulation.
+
+**Improved Startup Performance**
+The native binary directly invokes CoreCLR from memory and loads the injected DLLs as resources, significantly reducing startup time.
+
+**Easier Diagnostics and Debugging**
+The host code retains complete control over .NET runtime initialization, providing more precise diagnostic tools and logging capabilities.
+
+**Conclusion**
+While Single File Publish is straightforward and suitable for many use cases, bundling .NET DLLs at the end of the native binary comes with several limitations and potential issues. The presented resource injection technique addresses these challenges by offering greater flexibility, security, and performance.
+
+## Project Structure
+* **AppHostLinux** - Linux build project for the .NET Core startup (C++)
+* **AppHostWindows** - Windows build project for the .NET Core startup (C++)
+* **AppHostShared** - Shared source code for the .NET Core startup (C++).
+* **Hello** - A .NET Core project compiled into ''Hello.dll'', which is embedded as a resource/section into the AppHost binary (C#).
+* **InjectResourceLinux** - Injects 'Hello.dll' into 'AppHostLinux.Out' as an ELF section (C#).
+* **InjectResourceWindows** - Injects 'Hello.dll' into 'AppHostWindows.Exe' as a PE resource (C#).
+
+
+## Build instuctions
+
+
+### Prerequisites
+* Operating System: Windows 11
+* .NET SDK: Version 8.0 (64-bit)
+* Linux Environment: WSL with Ubuntu 20.04 LTS
+* IDE: Visual Studio Community 2022
+
+### Installing Dependencies in WSL
+Run the following commands in your WSL terminal to install dotnet-sdk and a build tools
+```bash
+wget https://packages.microsoft.com/config/ubuntu/20.04/packages-microsoft-prod.deb -O packages-microsoft-prod.deb
+sudo dpkg -i packages-microsoft-prod.deb
+rm packages-microsoft-prod.deb
+sudo apt-get update && sudo apt-get install -y dotnet-sdk-8.0
+
+sudo apt install -y openssh-server build-essential gdb rsync make zip
+wget https://github.com/microsoft/CMake/releases/download/v3.19.4268486/cmake-3.19.4268486-MSVC_2-Linux-x64.sh
+chmod +x cmake-3.19.4268486-MSVC_2-Linux-x64.sh
+./cmake-3.19.4268486-MSVC_2-Linux-x64.sh
+```
+
+### Clone repository
+
+```bash
+git clone https://github.com/xmegz/clrhost.git
+```
+
+### Compile
+* Open the solution in 'Visual Studio 2022'.
+* Build the 'InjectResourceWindows' project in 64-bit 'Release' mode.
+* Run 'InjectResourceWindows' to generate the Windows-hosted executable.
+* Build the 'InjectResourceLinux' project in 64-bit 'Release' mode.
+* Run 'InjectResourceLinux' to generate the Linux-hosted executable.
+
+## Execution Instructions
+
+**Windows**
+Execute the generated binary with arguments from the 'out' folder:
+```powershell
+clrhost\InjectResourceWindows\bin\Release\net8.0\out>Hello.full.exe 1 2 3 4
+```
+
+Sample Output:
+```powershell
+[INFO] Apphost [Jan  2 2025 19:07:05]
+[INFO] CoreCLR path:c:\Program Files\dotnet\shared\Microsoft.NETCore.App\8.0.3\coreclr.dll
+[INFO] CoreCLR pointer:0xd6720000
+[INFO] Error writer setted
+[INFO] Initialize OK
+[INFO] Create delegate OK
+[INFO] Call assembly load addr:0x00418cf0 size:9728
+[INFO] Assembly load ret - 0x00000000
+[INFO] Create delegate OK
+[INFO] Delegate entryPoint OK
+[INFO] Call entryPoint delegate...
+info: Hello.Program[0]
+      Ctor Hello, Version=1.0.9133.34412, Culture=neutral, PublicKeyToken=null
+info: Hello.Program[0]
+      Start 2025. 01. 02. 19:07:34
+info: Hello.Program[0]
+      Args: 1,2,3,4
+info: Hello.Program[0]
+      APP_PATHS : C:\Projects\PadarCom\Source\clrhost\InjectResourceWindows\bin\Release\net8.0\out\
+info: Hello.Program[0]
+      APP_NAME : APPHOST
+info: Hello.Program[0]
+      APPBASE : C:\Projects\PadarCom\Source\clrhost\InjectResourceWindows\bin\Release\net8.0\out\
+info: Hello.Program[0]
+      HOST_RUNTIME_CONTRACT : 0x7ff635369078
+info: Hello.Program[0]
+      NATIVE_DLL_SEARCH_DIRECTORIES : C:\Projects\PadarCom\Source\clrhost\InjectResourceWindows\bin\Release\net8.0\out\runtimes\win-x64\native\;C:\Projects\PadarCom\Source\clrhost\InjectResourceWindows\bin\Release\net8.0\out\runtimes\win\lib\netcoreapp3.0\;C:\Projects\PadarCom\Source\clrhost\InjectResourceWindows\bin\Release\net8.0\out\runtimes\win\lib\netstandard2.0\;c:\Program Files\dotnet\shared\Microsoft.NETCore.App\8.0.3\;c:\Program Files\dotnet\shared\Microsoft.AspNetCore.App\8.0.3\;C:\Projects\PadarCom\Source\clrhost\InjectResourceWindows\bin\Release\net8.0\out\;
+info: Hello.Data[0]
+      Test Json Serializer {"Id":0,"Name":"Name"}
+info: Hello.Program[0]
+      End 2025. 01. 02. 19:07:34
+[INFO] Shutdown exitCode:11
+```
+
+**Linux**
+Run the executable from your WSL terminal from the 'out' folder:
+``` bash
+asus@Asus:/mnt/c/clrhost/InjectResourceLinux/bin/Release/net8.0/out$ ./Hello.full.exe 1 2 3 4
+```
+
+Sample Output:
+``` bash
+[INFO] Apphost [Jan  2 2025 19:07:00]
+[INFO] CoreCLR path:/usr/share/dotnet/shared/Microsoft.NETCore.App/8.0.3/libcoreclr.so
+[INFO] CoreCLR pointer:0xdba67680
+[INFO] Error writer setted
+[INFO] Initialize OK
+[INFO] Create delegate OK
+[INFO] Call assembly load addr:0xdbb2baa0 size:9728
+[INFO] Assembly load ret - 0x00000000
+[INFO] Create delegate OK
+[INFO] Delegate entryPoint OK
+[INFO] Call entryPoint delegate...
+info: Hello.Program[0]
+      Ctor Hello, Version=1.0.9133.34412, Culture=neutral, PublicKeyToken=null
+info: Hello.Program[0]
+      Start 01/02/2025 19:07:26
+info: Hello.Program[0]
+      Args: 1,2,3,4
+info: Hello.Program[0]
+      APP_PATHS : /mnt/c/Projects/PadarCom/Source/clrhost/InjectResourceLinux/bin/Release/net8.0/out/
+info: Hello.Program[0]
+      APP_NAME : APPHOST
+info: Hello.Program[0]
+      APPBASE : /mnt/c/Projects/PadarCom/Source/clrhost/InjectResourceLinux/bin/Release/net8.0/out/
+info: Hello.Program[0]
+      HOST_RUNTIME_CONTRACT : 0x5639da2a0020
+info: Hello.Program[0]
+      NATIVE_DLL_SEARCH_DIRECTORIES : /mnt/c/Projects/PadarCom/Source/clrhost/InjectResourceLinux/bin/Release/net8.0/out/runtimes/linux-x64/native/:/mnt/c/Projects/PadarCom/Source/clrhost/InjectResourceLinux/bin/Release/net8.0/out/runtimes/linux/lib/netstandard2.0/:/mnt/c/Projects/PadarCom/Source/clrhost/InjectResourceLinux/bin/Release/net8.0/out/runtimes/unix/lib/netcoreapp3.0/:/usr/share/dotnet/shared/Microsoft.NETCore.App/8.0.3/:/usr/share/dotnet/shared/Microsoft.AspNetCore.App/8.0.3/:/mnt/c/Projects/PadarCom/Source/clrhost/InjectResourceLinux/bin/Release/net8.0/out/:
+info: Hello.Data[0]
+      Test Json Serializer {"Id":0,"Name":"Name"}
+info: Hello.Program[0]
+      End 01/02/2025 19:07:26
+[INFO] Shutdown exitCode:11
+```
+
+# How it made ?
 
 ## Main repository
 https://github.com/dotnet/runtime
@@ -183,8 +334,6 @@ https://github.com/dotnet/runtime/blob/main/docs/design/features/hosting-layer-a
 Host Error codes
 https://github.com/dotnet/runtime/blob/main/docs/design/features/host-error-codes.md
 
-c:\Projects\Microsoft\Source\runtime\src\installer\managed\Microsoft.NET.HostModel\
-c:\Projects\Microsoft\Source\runtime\src\native\corehost\
 
 ## Inject Resource Windows
 
@@ -192,14 +341,6 @@ Inject Windows Resource to file
 https://github.com/dotnet/runtime/tree/main/src/coreclr/tools/InjectResource
 
 ## Inject Resource Linux
-
-Install build tools
-```bash
-sudo apt install -y openssh-server build-essential gdb rsync make zip
-wget https://github.com/microsoft/CMake/releases/download/v3.19.4268486/cmake-3.19.4268486-MSVC_2-Linux-x64.sh
-chmod +x cmake-3.19.4268486-MSVC_2-Linux-x64.sh
-./cmake-3.19.4268486-MSVC_2-Linux-x64.sh
-```
 
 Objcopy test
 ```bash
@@ -305,8 +446,3 @@ https://github.com/dotnet/designs/blob/main/accepted/2020/single-file/extract.md
 
 Bundler
 https://github.com/dotnet/designs/blob/main/accepted/2020/single-file/bundler.md
-
-Boundle marker.
-c:\Projects\Microsoft\Source\runtime\src\native\corehost\apphost\
-
-hostpolicy_context.cpp

@@ -87,8 +87,13 @@ void pal_debug(const char* format, ...);
 void pal_error(int code, const char* format, ...);
 void pal_trace(const char* message);
 
+// Get CLR paths and parameters
 void pal_get_paths(PalPaths* path, int major_rt_version);
+
+// Get CoreCLR function pointers
 void pal_get_pointers(PalPointers* pointers, const char* corecrl_file_name);
+
+// Load .net assembly dll from resource
 void pal_load_assembly(PalAssembly* assembly);
 
 #endif

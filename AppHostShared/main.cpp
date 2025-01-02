@@ -49,7 +49,7 @@ int main(int argc, const char* argv[])
 	PalPointers Pointers;
 	PalAssembly Assembly;
 
-	pal_info("Apphost start build :%s %s\n",__DATE__, __TIME__);
+	pal_info("Apphost [%s %s]\n",__DATE__, __TIME__);
 	
 	pal_get_paths(&Paths, DOTNET_VERSION);
 	pal_info("CoreCLR path:%s\n", Paths.CoreCrlFileFullPath.c_str());
@@ -129,9 +129,8 @@ int main(int argc, const char* argv[])
 
 
 	//
-	// Call managed method
-	//
-	
+	// Load .net assembly from resource to memory
+	//	
 	pal_load_assembly(&Assembly);
 
 	pal_info("Call assembly load addr:0x%08x size:%ld\n",Assembly.Bytes, Assembly.Size);
@@ -171,19 +170,16 @@ int main(int argc, const char* argv[])
 
 	pal_info("Call entryPoint delegate...\n");
 	
-	//
-	// Skip first argument
-	//
-	++argv;
+	++argv; // Skip first argument
 	argc--;
 
 	PtrNativeEntryPoint(argc, argv);
 
-	int exitCode;
-
 	//
 	// Shutdown CoreCLR. It unloads the AppDomain and stops the CoreCLR host.
 	//
+	int exitCode;
+
 	hr = Pointers.PtrShutdown(host_handle, domain_id, &exitCode);
 	if (FAILED(hr))
 		pal_error(pal_error::shutdown_crl, "Shutdown failed - 0x%08x\n", hr);

@@ -4,9 +4,9 @@
  * Author:     Pádár Tamás
  -----------------------------------------------------------------------------*/
 
- //
- // Include
- //
+//
+// Global Define & Include
+//
 #define _CRT_SECURE_NO_WARNINGS 
 #define _CRT_SECURE_CPP_OVERLOAD_STANDARD_NAMES 1
 #include "pal.h"
@@ -22,6 +22,12 @@ using namespace std;
 //
 
 #ifdef WINDOWS
+
+/*
+//
+// WINDOWS
+//
+*/
 
 #include <windows.h>
 
@@ -188,6 +194,12 @@ static inline void pal_load_resource(const char* identifier, PalAssembly* assemb
 }
 
 #else
+
+/*
+//
+// LINUX
+//
+*/
 
 #include <dlfcn.h>
 #include <unistd.h>
