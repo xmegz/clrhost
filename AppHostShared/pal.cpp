@@ -455,7 +455,7 @@ void pal_trace(const char* message)
 }
 
 //-----------------------------------------------------------------------------
-inline size_t pal_utf8string(const string str, char* out_buffer, size_t buffer_len)
+static inline size_t pal_utf8string(const string str, char* out_buffer, size_t buffer_len)
 //-----------------------------------------------------------------------------
 {
 	size_t len = str.size() + 1;
@@ -473,15 +473,19 @@ inline size_t pal_utf8string(const string str, char* out_buffer, size_t buffer_l
  size_t HOST_CONTRACT_CALLTYPE get_runtime_property(const char* key,char* value_buffer,size_t value_buffer_size,void* contract_context)
 //-----------------------------------------------------------------------------
 {
-	pal_info("get_runtime_property %s", key);
+	pal_info("get_runtime_property %s\n", key);
 
 	if (strcmp(key, HOST_PROPERTY_ENTRY_ASSEMBLY_NAME) == 0)
 	{
+		pal_debug(HOST_PROPERTY_ENTRY_ASSEMBLY_NAME" found!\n");
+
 		return pal_utf8string(string("Hello.dll"), value_buffer, value_buffer_size);
 	}
 
 	if (strcmp(key, HOST_PROPERTY_NATIVE_DLL_SEARCH_DIRECTORIES) == 0)
 	{
+		pal_debug(HOST_PROPERTY_NATIVE_DLL_SEARCH_DIRECTORIES" found!\n");
+		
 		return pal_utf8string(pal_get_app_dir_path(), value_buffer, value_buffer_size);
 	}
 

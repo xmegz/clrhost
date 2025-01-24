@@ -11,6 +11,7 @@
     <EnableLibraryImportGenerator>true</EnableLibraryImportGenerator>
     <ImplicitUsings>enable</ImplicitUsings>
     <UseAppHost>true</UseAppHost>
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
   </PropertyGroup>
 
   <ItemGroup>
